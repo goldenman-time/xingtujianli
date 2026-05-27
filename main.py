@@ -1,16 +1,170 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from fastapi.responses import JSONResponse, StreamingResponse
+from pydantic import BaseModel, validator
 from typing import List, Optional
 import os
+import uuid
+import time
+import hashlib
+from datetime import datetime
 from dotenv import load_dotenv
 import json
 import httpx
 import asyncio
 import re
+import shutil
+import io
+import tempfile
+import urllib.parse
+from html import escape as html_escape
 
 load_dotenv()
+
+# ========== 后端XSS安全防护工具 ==========
+
+class SecurityUtils:
+    """统一的安全工具类，用于防止XSS和其他注入攻击"""
+    
+    @staticmethod
+    def escape_html(text: str) -> str:
+        """转义HTML特殊字符"""
+        if not isinstance(text, str):
+            return str(text) if text else ''
+        return html_escape(text)
+    
+    @staticmethod
+    def sanitize_input(text: str, max_length: int = 10000) -> str:
+        """净化用户输入，移除潜在的危险内容"""
+        if not isinstance(text, str):
+            return str(text) if text else ''
+        
+        # 限制长度
+        text = text[:max_length]
+        
+        # 移除null字节
+        text = text.replace('\x00', '')
+        
+        return text
+    
+    @staticmethod
+    def validate_name(name: str) -> tuple:
+        """验证姓名输入"""
+        if not name or not name.strip():
+            return False, name, "姓名不能为空"
+        
+        name = name.strip()
+        if len(name) > 50:
+            return False, name[:50], "姓名过长"
+        
+        # 只允许中文、字母、空格和常见分隔符
+        if not re.match(r'^[\u4e00-\u9fa5a-zA-Z\s·\-\.]+$', name):
+            # 移除非法字符
+            clean_name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z\s·\-\.]', '', name)
+            return False, clean_name, "姓名包含非法字符"
+        
+        return True, name, ""
+    
+    @staticmethod
+    def validate_phone(phone: str) -> tuple:
+        """验证手机号"""
+        if not phone:
+            return False, "", "手机号不能为空"
+        
+        phone = phone.strip()
+        clean_phone = re.sub(r'[\s\-—\(\)]', '', phone)
+        
+        if not re.match(r'^1[3-9]\d{9}$', clean_phone):
+            return False, phone, "手机号格式不正确"
+        
+        return True, clean_phone, ""
+    
+    @staticmethod
+    def validate_email(email: str) -> tuple:
+        """验证邮箱"""
+        if not email:
+            return False, "", "邮箱不能为空"
+        
+        email = email.strip()
+        if not re.match(r'^[^\s@]+@[^\s@]+\.[^\s@]+$', email):
+            return False, email, "邮箱格式不正确"
+        
+        if len(email) > 100:
+            return False, email[:100], "邮箱过长"
+        
+        return True, email, ""
+    
+    @staticmethod
+    def validate_url(url: str) -> tuple:
+        """验证URL"""
+        if not url or not url.strip():
+            return True, "", ""  # URL是可选的
+        
+        url = url.strip()
+        try:
+            parsed = urllib.parse.urlparse(url)
+            if parsed.scheme not in ['http', 'https']:
+                return False, "", "URL必须以http或https开头"
+            
+            if len(url) > 500:
+                return False, url[:500], "URL过长"
+            
+            return True, url, ""
+        except Exception:
+            return False, "", "URL格式不正确"
+    
+    @staticmethod
+    def validate_text_content(content: str, field_name: str = "内容", max_length: int = 10000) -> tuple:
+        """验证文本内容"""
+        if not content:
+            return True, "", ""
+        
+        content = content.strip()
+        
+        if len(content) > max_length:
+            return False, content[:max_length], f"{field_name}过长（最多{max_length}字）"
+        
+        # 检查是否包含可疑的脚本标签（虽然会在输出时转义，但提前检测更好）
+        dangerous_patterns = [
+            r'<script[^>]*>.*?</script>',
+            r'javascript:',
+            r'on\w+\s*=',
+            r'data:text/html',
+        ]
+        
+        for pattern in dangerous_patterns:
+            if re.search(pattern, content, re.IGNORECASE | re.DOTALL):
+                # 记录警告但不拒绝（因为会转义）
+                pass
+        
+        return True, content, ""
+    
+    @staticmethod
+    def sanitize_generated_html(html: str) -> str:
+        """净化AI生成的HTML内容，移除潜在的危险标签和属性"""
+        if not isinstance(html, str):
+            return ''
+        
+        # 移除script标签及其内容
+        html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.IGNORECASE | re.DOTALL)
+        
+        # 移除事件处理器
+        html = re.sub(r'\s+on\w+\s*=\s*["\'][^"\']*["\']', '', html, flags=re.IGNORECASE)
+        
+        # 移除javascript:协议
+        html = re.sub(r'javascript\s*:', '', html, flags=re.IGNORECASE)
+        
+        # 移除data: URL（除了图片）
+        html = re.sub(r'data:(?!image/)[^"\'>\s]*', '', html, flags=re.IGNORECASE)
+        
+        # 移除危险标签（保留安全的格式化标签）
+        dangerous_tags = ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button']
+        for tag in dangerous_tags:
+            html = re.sub(f'<{tag}[^>]*>.*?</{tag}>', '', html, flags=re.IGNORECASE | re.DOTALL)
+            html = re.sub(f'<{tag}[^>]*/?>', '', html, flags=re.IGNORECASE)
+        
+        return html.strip()
 
 app = FastAPI(title="星途简历 - AI后端", version="3.0.0")
 
@@ -128,6 +282,321 @@ class GenerateResumeRequest(BaseModel):
 class GenerateResumeResponse(BaseModel):
     html: str
     success: bool
+
+class ExportWordRequest(BaseModel):
+    html: str
+    name: str = "简历"
+    templateId: str = "template_15"
+
+# ========== HTML转Word文档 ==========
+
+def html_to_word(html_content: str, name: str = "简历", template_id: str = "template_15") -> io.BytesIO:
+    from bs4 import BeautifulSoup
+    from docx import Document
+    from docx.shared import Pt, Cm, RGBColor, Inches
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+    from docx.enum.section import WD_ORIENT
+    from docx.oxml.ns import qn
+
+    tmpl = TEMPLATE_STYLES.get(template_id, TEMPLATE_STYLES["template_15"])
+    theme_color_hex = tmpl.get("color", "#3b82f6").lstrip("#")
+    theme_color = RGBColor(
+        int(theme_color_hex[0:2], 16),
+        int(theme_color_hex[2:4], 16),
+        int(theme_color_hex[4:6], 16)
+    )
+
+    doc = Document()
+
+    section = doc.sections[0]
+    section.page_width = Cm(21.0)
+    section.page_height = Cm(29.7)
+    section.top_margin = Cm(1.5)
+    section.bottom_margin = Cm(1.5)
+    section.left_margin = Cm(1.5)
+    section.right_margin = Cm(1.5)
+
+    style = doc.styles['Normal']
+    font = style.font
+    font.name = '微软雅黑'
+    font.size = Pt(10.5)
+    font.color.rgb = RGBColor(0x33, 0x33, 0x33)
+    style.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')
+    pf = style.paragraph_format
+    pf.space_before = Pt(2)
+    pf.space_after = Pt(2)
+    pf.line_spacing = 1.35
+
+    soup = BeautifulSoup(html_content, "lxml")
+
+    def _parse_style(style_str):
+        result = {}
+        if not style_str:
+            return result
+        for item in style_str.split(";"):
+            item = item.strip()
+            if ":" in item:
+                k, v = item.split(":", 1)
+                result[k.strip().lower()] = v.strip()
+        return result
+
+    def _get_font_size(styles):
+        fs = styles.get("font-size", "")
+        if not fs:
+            return None
+        fs = fs.lower().replace(" ", "")
+        try:
+            if "px" in fs:
+                val = float(fs.replace("px", ""))
+                return Pt(val * 0.75)
+            elif "pt" in fs:
+                return Pt(float(fs.replace("pt", "")))
+            elif "em" in fs:
+                return Pt(float(fs.replace("em", "")) * 10.5)
+        except (ValueError, TypeError):
+            pass
+        return None
+
+    def _get_color(styles):
+        c = styles.get("color", "")
+        if not c:
+            return None
+        c = c.strip().lower()
+        if c.startswith("#") and len(c) == 7:
+            try:
+                return RGBColor(int(c[1:3], 16), int(c[3:5], 16), int(c[5:7], 16))
+            except ValueError:
+                pass
+        return None
+
+    def _add_inline_runs(paragraph, element, default_bold=False):
+        if element.name == "br":
+            paragraph.add_run("\n")
+            return
+        if isinstance(element, str):
+            text = element.strip()
+            if text:
+                run = paragraph.add_run(text)
+                run.bold = default_bold
+                run.font.name = '微软雅黑'
+                run.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')
+            return
+        if not hasattr(element, 'name') or element.name is None:
+            text = str(element).strip()
+            if text:
+                run = paragraph.add_run(text)
+                run.bold = default_bold
+                run.font.name = '微软雅黑'
+                run.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')
+            return
+
+        tag = element.name.lower() if element.name else ""
+        el_style = _parse_style(element.get("style", ""))
+        is_bold = default_bold or tag in ("b", "strong")
+        is_italic = tag in ("i", "em")
+        is_underline = tag in ("u",)
+        is_strikethrough = tag in ("s", "strike", "del")
+        font_weight = el_style.get("font-weight", "")
+        if font_weight in ("bold", "700", "800", "900"):
+            is_bold = True
+        font_style_css = el_style.get("font-style", "")
+        if font_style_css == "italic":
+            is_italic = True
+        text_decoration = el_style.get("text-decoration", "")
+        if "underline" in text_decoration:
+            is_underline = True
+        if "line-through" in text_decoration:
+            is_strikethrough = True
+
+        if tag in ("img", "br", "hr"):
+            if tag == "br":
+                paragraph.add_run("\n")
+            return
+
+        if tag in ("ul", "ol"):
+            return
+
+        has_element_children = any(hasattr(c, 'name') and c.name is not None for c in element.children)
+
+        if has_element_children:
+            for child in element.children:
+                _add_inline_runs(paragraph, child, is_bold)
+        else:
+            text = element.get_text()
+            if text and text.strip():
+                run = paragraph.add_run(text.strip())
+                run.bold = is_bold
+                run.italic = is_italic
+                run.underline = is_underline
+                if is_strikethrough:
+                    run.font.strike = True
+                run.font.name = '微软雅黑'
+                run.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')
+                font_size = _get_font_size(el_style)
+                if font_size:
+                    run.font.size = font_size
+                color = _get_color(el_style)
+                if color:
+                    run.font.color.rgb = color
+
+    def _process_element(element, doc):
+        if isinstance(element, str):
+            text = element.strip()
+            if text:
+                p = doc.add_paragraph(text)
+            return
+
+        if not hasattr(element, 'name') or element.name is None:
+            return
+
+        tag = element.name.lower() if element.name else ""
+
+        if tag in ("h1", "h2", "h3", "h4", "h5", "h6"):
+            level = int(tag[1])
+            text = element.get_text(strip=True)
+            if not text:
+                return
+            p = doc.add_paragraph()
+            if level <= 2:
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            run = p.add_run(text)
+            run.bold = True
+            run.font.name = '微软雅黑'
+            run.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')
+            size_map = {1: Pt(22), 2: Pt(16), 3: Pt(14), 4: Pt(12), 5: Pt(11), 6: Pt(10.5)}
+            run.font.size = size_map.get(level, Pt(10.5))
+            if level <= 2:
+                run.font.color.rgb = theme_color
+            pf = p.paragraph_format
+            pf.space_before = Pt(12) if level <= 2 else Pt(6)
+            pf.space_after = Pt(4)
+            if level <= 2:
+                p2 = doc.add_paragraph()
+                p2_fmt = p2.paragraph_format
+                p2_fmt.space_before = Pt(0)
+                p2_fmt.space_after = Pt(6)
+                from docx.oxml import OxmlElement
+                pPr = p2._element.get_or_add_pPr()
+                pBdr = OxmlElement('w:pBdr')
+                bottom = OxmlElement('w:bottom')
+                bottom.set(qn('w:val'), 'single')
+                bottom.set(qn('w:sz'), '6')
+                bottom.set(qn('w:space'), '1')
+                bottom.set(qn('w:color'), theme_color_hex)
+                pBdr.append(bottom)
+                pPr.append(pBdr)
+            return
+
+        if tag == "p":
+            p = doc.add_paragraph()
+            el_style = _parse_style(element.get("style", ""))
+            align = el_style.get("text-align", "")
+            if align == "center":
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            elif align == "right":
+                p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            for child in element.children:
+                _add_inline_runs(p, child)
+            return
+
+        if tag == "ul":
+            for li in element.find_all("li", recursive=False):
+                text = li.get_text(strip=True)
+                if text:
+                    p = doc.add_paragraph(style='List Bullet')
+                    for child in li.children:
+                        _add_inline_runs(p, child, False)
+            return
+
+        if tag == "ol":
+            for li in element.find_all("li", recursive=False):
+                text = li.get_text(strip=True)
+                if text:
+                    p = doc.add_paragraph(style='List Number')
+                    for child in li.children:
+                        _add_inline_runs(p, child, False)
+            return
+
+        if tag == "table":
+            rows = element.find_all("tr")
+            if not rows:
+                return
+            first_row = rows[0]
+            is_header = bool(first_row.find(["th"]))
+            num_cols = len(first_row.find_all(["td", "th"]))
+            if num_cols == 0:
+                return
+            table = doc.add_table(rows=len(rows), cols=num_cols)
+            table.style = 'Table Grid'
+            for i, row in enumerate(rows):
+                cells = row.find_all(["td", "th"])
+                for j, cell in enumerate(cells):
+                    if j < num_cols:
+                        table_cell = table.rows[i].cells[j]
+                        cell_text = cell.get_text(strip=True)
+                        table_cell.text = ""
+                        p = table_cell.paragraphs[0]
+                        for child in cell.children:
+                            _add_inline_runs(p, child)
+                        if i == 0 and is_header:
+                            for run in p.runs:
+                                run.bold = True
+            return
+
+        if tag == "hr":
+            p = doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(4)
+            p.paragraph_format.space_after = Pt(4)
+            from docx.oxml import OxmlElement
+            pPr = p._element.get_or_add_pPr()
+            pBdr = OxmlElement('w:pBdr')
+            bottom = OxmlElement('w:bottom')
+            bottom.set(qn('w:val'), 'single')
+            bottom.set(qn('w:sz'), '4')
+            bottom.set(qn('w:space'), '1')
+            bottom.set(qn('w:color'), 'CCCCCC')
+            pBdr.append(bottom)
+            pPr.append(pBdr)
+            return
+
+        if tag in ("div", "section", "article", "main", "header", "footer", "nav", "aside", "span"):
+            block_style = _parse_style(element.get("style", ""))
+            display = block_style.get("display", "")
+            if display == "none":
+                return
+            for child in element.children:
+                _process_element(child, doc)
+            return
+
+        if tag in ("a",):
+            text = element.get_text(strip=True)
+            if text:
+                p = doc.add_paragraph()
+                run = p.add_run(text)
+                run.font.color.rgb = RGBColor(0x25, 0x63, 0xeb)
+                run.underline = True
+                run.font.name = '微软雅黑'
+                run.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')
+                href = element.get("href", "")
+                if href:
+                    run2 = p.add_run(f" ({href})")
+                    run2.font.size = Pt(8)
+                    run2.font.color.rgb = RGBColor(0x99, 0x99, 0x99)
+                    run2.font.name = '微软雅黑'
+                    run2.element.rPr.rFonts.set(qn('w:eastAsia'), '微软雅黑')
+            return
+
+        for child in element.children:
+            _process_element(child, doc)
+
+    body = soup.body or soup
+    for child in body.children:
+        _process_element(child, doc)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    buffer.seek(0)
+    return buffer
 
 # ========== 模板风格映射 ==========
 
@@ -444,6 +913,84 @@ def clean_json_response(content: str) -> str:
         content = content[:-3]
     return content.strip()
 
+# ========== 简历上传模块 ==========
+
+UPLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt"}
+MAX_FILE_SIZE = 15 * 1024 * 1024
+
+ALLOWED_MIME_TYPES = {
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "text/plain",
+}
+
+resume_store = {}
+
+def get_file_extension(filename: str) -> str:
+    return os.path.splitext(filename)[1].lower()
+
+def validate_file_type(filename: str, content_type: str) -> bool:
+    ext = get_file_extension(filename)
+    if ext not in ALLOWED_EXTENSIONS:
+        return False
+    if content_type and content_type not in ALLOWED_MIME_TYPES and not content_type.startswith("application/"):
+        if content_type not in ALLOWED_MIME_TYPES:
+            return False
+    return True
+
+def extract_text_from_file(file_path: str, extension: str) -> str:
+    try:
+        if extension == ".txt":
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                return f.read()
+        elif extension == ".pdf":
+            from PyPDF2 import PdfReader
+            reader = PdfReader(file_path)
+            text = ""
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+            return text.strip()
+        elif extension == ".docx":
+            from docx import Document
+            doc = Document(file_path)
+            text = ""
+            for para in doc.paragraphs:
+                if para.text.strip():
+                    text += para.text + "\n"
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        if cell.text.strip():
+                            text += cell.text + " "
+                    text += "\n"
+            return text.strip()
+        elif extension == ".doc":
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            text = re.sub(r'[^\u4e00-\u9fff\u0020-\u007ea-zA-Z0-9\s\.\,\;\:\!\?\-\(\)\[\]\{\}@\/\\]', '', content)
+            return text.strip() if text.strip() else "DOC格式文件，建议转换为DOCX格式以获得更好的解析效果"
+        else:
+            return ""
+    except Exception as e:
+        return f"文件解析失败: {str(e)}"
+
+def generate_safe_filename(original_filename: str) -> str:
+    ext = get_file_extension(original_filename)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:8]
+    return f"resume_{timestamp}_{unique_id}{ext}"
+
+class ResumeChatRequest(BaseModel):
+    resume_id: str
+    message: str
+    chat_history: Optional[List[dict]] = None
+
 # ========== API 路由 ==========
 
 @app.post("/api/optimize", response_model=OptimizeResponse)
@@ -453,27 +1000,58 @@ async def optimize_resume(req: OptimizeRequest):
     if not req.experiences:
         raise HTTPException(status_code=400, detail="经历列表不能为空")
 
-    tasks = [call_doubao_optimize(exp, req.jd, req.school, req.major) for exp in req.experiences]
+    # 验证和净化用户输入
+    validated_experiences = []
+    for exp in req.experiences:
+        # 净化每个经历字段
+        safe_exp = ExperienceItem(
+            id=exp.id,
+            type=exp.type if exp.type in ['internship', 'campus', 'club', 'parttime', 'research'] else 'internship',
+            role=SecurityUtils.sanitize_input(exp.role, 100),
+            company=SecurityUtils.sanitize_input(exp.company, 100),
+            date=SecurityUtils.sanitize_input(exp.date, 50),
+            content=SecurityUtils.sanitize_input(exp.content, 5000)
+        )
+        validated_experiences.append(safe_exp)
+
+    # 净化其他字段
+    safe_jd = SecurityUtils.sanitize_input(req.jd, 5000)
+    safe_school = SecurityUtils.sanitize_input(req.school, 100)
+    safe_major = SecurityUtils.sanitize_input(req.major, 100)
+
+    tasks = [call_doubao_optimize(exp, safe_jd, safe_school, safe_major) for exp in validated_experiences]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     valid_results = []
     for i, result in enumerate(results):
         if isinstance(result, Exception):
-            exp = req.experiences[i]
+            exp = validated_experiences[i]
             valid_results.append(StarResult(
                 experienceId=exp.id,
                 experienceType=exp.type,
-                role=exp.role,
-                company=exp.company,
-                date=exp.date,
+                role=SecurityUtils.escape_html(exp.role),
+                company=SecurityUtils.escape_html(exp.company),
+                date=SecurityUtils.escape_html(exp.date),
                 focus="综合优化（AI处理异常）",
-                S=f"在{exp.company or '相关单位'}开展实践。",
-                T=f"担任{exp.role}，负责核心工作任务。",
+                S=f"在{SecurityUtils.escape_html(exp.company) or '相关单位'}开展实践。",
+                T=f"担任{SecurityUtils.escape_html(exp.role)}，负责核心工作任务。",
                 A="运用专业技能完成各项工作。",
                 R="工作顺利完成，获得认可。"
             ))
         else:
-            valid_results.append(result)
+            # 确保AI返回的结果也是安全的
+            valid_results.append(StarResult(
+                experienceId=result.experienceId,
+                experienceType=result.experienceType,
+                role=result.role,
+                company=result.company,
+                date=result.date,
+                focus=SecurityUtils.escape_html(result.focus),
+                S=SecurityUtils.escape_html(result.S),
+                T=SecurityUtils.escape_html(result.T),
+                A=SecurityUtils.escape_html(result.A),
+                R=SecurityUtils.escape_html(result.R)
+            ))
 
     return OptimizeResponse(results=valid_results)
 
@@ -483,7 +1061,21 @@ async def get_suggestions(req: SuggestionsRequest):
         raise HTTPException(status_code=500, detail="API Key 未配置")
     if not req.experience.content or req.experience.content.strip() == "":
         raise HTTPException(status_code=400, detail="经历内容不能为空")
-    return await call_doubao_suggestions(req.experience, req.jd, req.targetJob, req.skills)
+    
+    # 净化输入
+    safe_experience = ExperienceItem(
+        id=req.experience.id,
+        type=req.experience.type,
+        role=SecurityUtils.sanitize_input(req.experience.role, 100),
+        company=SecurityUtils.sanitize_input(req.experience.company, 100),
+        date=SecurityUtils.sanitize_input(req.experience.date, 50),
+        content=SecurityUtils.sanitize_input(req.experience.content, 5000)
+    )
+    safe_jd = SecurityUtils.sanitize_input(req.jd, 5000)
+    safe_target_job = SecurityUtils.sanitize_input(req.targetJob, 100)
+    safe_skills = SecurityUtils.sanitize_input(req.skills, 1000)
+    
+    return await call_doubao_suggestions(safe_experience, safe_jd, safe_target_job, safe_skills)
 
 @app.post("/api/generate-resume", response_model=GenerateResumeResponse)
 async def generate_full_resume(req: GenerateResumeRequest):
@@ -491,11 +1083,295 @@ async def generate_full_resume(req: GenerateResumeRequest):
         raise HTTPException(status_code=500, detail="API Key 未配置")
     if not req.name or not req.experiences:
         raise HTTPException(status_code=400, detail="姓名和经历不能为空")
+    
     try:
-        html = await call_doubao_generate_resume(req)
-        return GenerateResumeResponse(html=html, success=True)
+        # 净化所有输入字段
+        safe_req = GenerateResumeRequest(
+            targetJob=SecurityUtils.sanitize_input(req.targetJob, 100),
+            expectedCity=SecurityUtils.sanitize_input(req.expectedCity, 50),
+            jobType=req.jobType,
+            name=SecurityUtils.sanitize_input(req.name, 50),
+            phone=SecurityUtils.sanitize_input(req.phone, 20),
+            email=SecurityUtils.sanitize_input(req.email, 100),
+            photo=SecurityUtils.sanitize_input(req.photo, 500) if req.photo else "",
+            github=SecurityUtils.sanitize_input(req.github, 200) if req.github else "",
+            blog=SecurityUtils.sanitize_input(req.blog, 200) if req.blog else "",
+            portfolio=SecurityUtils.sanitize_input(req.portfolio, 200) if req.portfolio else "",
+            personalWebsite=SecurityUtils.sanitize_input(req.personalWebsite, 200) if req.personalWebsite else "",
+            school=SecurityUtils.sanitize_input(req.school, 100),
+            major=SecurityUtils.sanitize_input(req.major, 100),
+            educationLevel=req.educationLevel,
+            graduation=SecurityUtils.sanitize_input(req.graduation, 20),
+            gpa=SecurityUtils.sanitize_input(req.gpa, 20) if req.gpa else "",
+            courses=SecurityUtils.sanitize_input(req.courses, 500) if req.courses else "",
+            skills=SecurityUtils.sanitize_input(req.skills, 1000) if req.skills else "",
+            certificates=SecurityUtils.sanitize_input(req.certificates, 500) if req.certificates else "",
+            selfEvaluation=SecurityUtils.sanitize_input(req.selfEvaluation, 1000) if req.selfEvaluation else "",
+            jd=SecurityUtils.sanitize_input(req.jd, 5000),
+            templateId=req.templateId,
+            experiences=[
+                ExperienceItem(
+                    id=exp.id,
+                    type=exp.type,
+                    role=SecurityUtils.sanitize_input(exp.role, 100),
+                    company=SecurityUtils.sanitize_input(exp.company, 100),
+                    date=SecurityUtils.sanitize_input(exp.date, 50),
+                    content=SecurityUtils.sanitize_input(exp.content, 5000)
+                ) for exp in req.experiences
+            ],
+            starResults=req.starResults,
+            suggestions=req.suggestions
+        )
+        
+        html = await call_doubao_generate_resume(safe_req)
+        
+        # 净化生成的HTML
+        safe_html = SecurityUtils.sanitize_generated_html(html)
+        
+        return GenerateResumeResponse(html=safe_html, success=True)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"简历生成失败: {str(e)}")
+        import logging
+        logging.error(f"简历生成失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="服务器内部错误，请稍后重试")
+
+@app.post("/api/export/word")
+async def export_word(req: ExportWordRequest):
+    if not req.html or req.html.strip() == "":
+        raise HTTPException(status_code=400, detail="简历内容不能为空")
+    try:
+        # 净化文件名，只允许安全字符
+        raw_name = req.name.strip() or "简历"
+        safe_name = re.sub(r'[^\u4e00-\u9fa5a-zA-Z0-9._\-]', '_', raw_name)
+        safe_name = safe_name[:50]  # 限制长度
+        if not safe_name or safe_name.startswith('.'):
+            safe_name = "简历"
+        
+        # 净化HTML内容
+        safe_html = SecurityUtils.sanitize_generated_html(req.html)
+        
+        buffer = html_to_word(safe_html, safe_name, req.templateId)
+        headers = {
+            "Content-Disposition": f"attachment; filename*=UTF-8''{urllib.parse.quote(f'{safe_name}_简历.docx')}",
+            "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        }
+        return StreamingResponse(buffer, headers=headers, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    except Exception as e:
+        import logging
+        logging.error(f"Word文档导出失败: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="文档导出失败，请稍后重试")
+
+@app.post("/api/resume/upload")
+async def upload_resume(file: UploadFile = File(...)):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="未选择文件")
+    
+    ext = get_file_extension(file.filename)
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"不支持的文件格式：{ext}。支持格式：PDF、DOC、DOCX、TXT"
+        )
+    
+    content = await file.read()
+    if len(content) == 0:
+        raise HTTPException(status_code=400, detail="文件内容为空")
+    
+    if len(content) > MAX_FILE_SIZE:
+        size_mb = len(content) / (1024 * 1024)
+        raise HTTPException(
+            status_code=400, 
+            detail=f"文件大小({size_mb:.1f}MB)超过限制(15MB)"
+        )
+    
+    file_hash = hashlib.sha256(content).hexdigest()
+    
+    safe_filename = generate_safe_filename(file.filename)
+    file_path = os.path.join(UPLOAD_DIR, safe_filename)
+    
+    try:
+        with open(file_path, "wb") as f:
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"文件保存失败: {str(e)}")
+    
+    extracted_text = extract_text_from_file(file_path, ext)
+    
+    if not extracted_text or len(extracted_text.strip()) < 10:
+        os.remove(file_path)
+        raise HTTPException(status_code=400, detail="无法从文件中提取有效文本内容，请确保文件非扫描图片且包含可读文字")
+    
+    resume_id = uuid.uuid4().hex
+    
+    resume_store[resume_id] = {
+        "id": resume_id,
+        "original_filename": file.filename,
+        "stored_filename": safe_filename,
+        "file_path": file_path,
+        "file_size": len(content),
+        "file_hash": file_hash,
+        "extension": ext,
+        "extracted_text": extracted_text,
+        "upload_time": datetime.now().isoformat(),
+    }
+    
+    return {
+        "success": True,
+        "resume_id": resume_id,
+        "filename": file.filename,
+        "file_size": len(content),
+        "extension": ext,
+        "extracted_text_length": len(extracted_text),
+        "message": "简历上传成功"
+    }
+
+@app.get("/api/resume/{resume_id}")
+async def get_resume_info(resume_id: str):
+    if resume_id not in resume_store:
+        raise HTTPException(status_code=404, detail="简历不存在或已过期")
+    info = resume_store[resume_id]
+    return {
+        "resume_id": info["id"],
+        "filename": info["original_filename"],
+        "file_size": info["file_size"],
+        "extension": info["extension"],
+        "upload_time": info["upload_time"],
+        "text_length": len(info["extracted_text"]),
+    }
+
+@app.delete("/api/resume/{resume_id}")
+async def delete_resume(resume_id: str):
+    if resume_id not in resume_store:
+        raise HTTPException(status_code=404, detail="简历不存在或已过期")
+    info = resume_store.pop(resume_id)
+    try:
+        if os.path.exists(info["file_path"]):
+            os.remove(info["file_path"])
+    except:
+        pass
+    return {"success": True, "message": "简历已删除"}
+
+@app.post("/api/resume/analyze")
+async def analyze_resume(resume_id: str = Form(...)):
+    if resume_id not in resume_store:
+        raise HTTPException(status_code=404, detail="简历不存在或已过期")
+    if not API_KEY:
+        raise HTTPException(status_code=500, detail="API Key 未配置")
+    
+    resume_text = resume_store[resume_id]["extracted_text"]
+    
+    system_prompt = """你是一位拥有10年经验的资深HR总监和简历分析专家。
+你的任务是对用户上传的简历进行全面、专业的分析。
+
+【分析维度】
+1. 整体评价：简历的整体质量和专业程度
+2. 结构分析：简历结构是否完整，板块是否齐全
+3. 内容分析：经历描述是否具体、量化，是否使用STAR法则
+4. 技能匹配：技能描述是否与目标岗位匹配
+5. 亮点与不足：明确指出简历的亮点和需要改进的地方
+6. 优化建议：给出3-5条具体的优化建议
+
+【输出格式】
+必须输出严格的JSON格式，不要包含markdown标记：
+{
+    "overall_score": 75,
+    "overall_comment": "整体评价...",
+    "structure_analysis": "结构分析...",
+    "content_analysis": "内容分析...",
+    "highlights": ["亮点1", "亮点2"],
+    "weaknesses": ["不足1", "不足2"],
+    "suggestions": ["建议1", "建议2", "建议3"],
+    "keywords": ["关键词1", "关键词2"]
+}"""
+
+    user_prompt = f"""请分析以下简历内容：
+
+{resume_text[:4000]}
+
+请给出全面、专业的分析，只输出JSON格式。"""
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            BASE_URL,
+            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": MODEL_ID,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 2000
+            }
+        )
+        result = response.json()
+        ai_content = clean_json_response(result["choices"][0]["message"]["content"])
+        analysis = json.loads(ai_content)
+        return {"success": True, "analysis": analysis}
+
+@app.post("/api/resume/chat")
+async def chat_with_resume(req: ResumeChatRequest):
+    if req.resume_id not in resume_store:
+        raise HTTPException(status_code=404, detail="简历不存在或已过期")
+    if not API_KEY:
+        raise HTTPException(status_code=500, detail="API Key 未配置")
+    
+    resume_text = resume_store[req.resume_id]["extracted_text"]
+    
+    # 净化用户消息
+    safe_message = SecurityUtils.sanitize_input(req.message, 2000)
+    if not safe_message.strip():
+        raise HTTPException(status_code=400, detail="消息内容不能为空")
+    
+    system_prompt = f"""你是"星途简历"AI助手，一位专业的简历顾问和职业规划师。
+你可以基于用户上传的简历内容，回答关于简历的各种问题，包括但不限于：
+
+1. 简历内容解读和分析
+2. 简历优化建议（措辞、结构、内容）
+3. 职位匹配度评估
+4. 面试准备建议
+5. 职业发展规划建议
+6. 技能提升建议
+
+【用户简历内容】
+{resume_text[:3000]}
+
+【规则】
+1. 回答必须基于简历实际内容，不得虚构信息
+2. 给出具体、可操作的建议，避免空泛表述
+3. 如果用户问题超出简历范围，可以适当拓展但需说明
+4. 保持专业、友好的语气
+5. 回答简洁明了，重点突出"""
+
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    if req.chat_history:
+        for msg in req.chat_history[-10:]:
+            role = msg.get("role", "user")
+            content = SecurityUtils.sanitize_input(msg.get("content", ""), 2000)
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content})
+    
+    messages.append({"role": "user", "content": safe_message})
+    
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        response = await client.post(
+            BASE_URL,
+            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+            json={
+                "model": MODEL_ID,
+                "messages": messages,
+                "temperature": 0.7,
+                "max_tokens": 1500
+            }
+        )
+        result = response.json()
+        ai_reply = result["choices"][0]["message"]["content"]
+        
+        # 净化AI回复（虽然AI回复相对安全，但为了防御性编程）
+        safe_reply = SecurityUtils.sanitize_input(ai_reply, 5000)
+        
+        return {"success": True, "reply": safe_reply}
 
 @app.get("/api/health")
 async def health_check():

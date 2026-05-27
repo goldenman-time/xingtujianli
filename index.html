@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>星途简历 - AI简历优化</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -21,6 +21,10 @@
         }
     </script>
     <style>
+        :root {
+            /* CSS变量预留区域 - 后续模块填充 */
+        }
+
         * { font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif; }
         body {
             background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #0F172A 100%);
@@ -328,7 +332,7 @@
             box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
         }
         .template-card.selected::after {
-            content: '✓';
+            content: '\2713';
             position: absolute;
             top: -8px; right: -8px;
             width: 24px; height: 24px;
@@ -357,971 +361,593 @@
             margin-right: 4px;
             margin-bottom: 4px;
         }
+        .nav-tab-btn {
+            color: #94A3B8;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+        .nav-tab-btn:hover {
+            color: #D4AF37;
+            background: rgba(212, 175, 55, 0.1);
+        }
+        .nav-tab-btn.active {
+            color: #D4AF37;
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .upload-drop-zone {
+            border: 2px dashed rgba(212, 175, 55, 0.4);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(15, 23, 42, 0.3);
+        }
+        .upload-drop-zone:hover, .upload-drop-zone.drag-over {
+            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.05);
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.1);
+        }
+        .upload-drop-zone.drag-over {
+            transform: scale(1.01);
+        }
+        .upload-format-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(212, 175, 55, 0.1);
+            color: #D4AF37;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .upload-success-card {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .upload-error-card {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .chat-welcome {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .chat-welcome-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        .chat-feature-card {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            color: #CBD5E1;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chat-feature-card:hover {
+            border-color: #D4AF37;
+            background: rgba(212, 175, 55, 0.05);
+            color: #D4AF37;
+        }
+        .chat-message {
+            display: flex;
+            gap: 10px;
+            animation: chatFadeIn 0.3s ease;
+        }
+        @keyframes chatFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-message.user {
+            flex-direction: row-reverse;
+        }
+        .chat-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .chat-avatar.ai {
+            background: rgba(212, 175, 55, 0.2);
+            color: #D4AF37;
+        }
+        .chat-avatar.user {
+            background: rgba(124, 58, 237, 0.2);
+            color: #7C3AED;
+        }
+        .chat-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+        .chat-message.ai .chat-bubble {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #CBD5E1;
+            border-top-left-radius: 4px;
+        }
+        .chat-message.user .chat-bubble {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            color: #E2E8F0;
+            border-top-right-radius: 4px;
+        }
+        .chat-input-area {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 12px;
+        }
+        .chat-input-field:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .analysis-score-ring {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 auto;
+        }
+        .analysis-section {
+            margin-bottom: 16px;
+        }
+        .analysis-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #D4AF37;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .analysis-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin: 2px 4px 2px 0;
+        }
+        .analysis-tag.highlight {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22C55E;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .analysis-tag.weakness {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .analysis-tag.keyword {
+            background: rgba(212, 175, 55, 0.15);
+            color: #D4AF37;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+        .analysis-suggestion-item {
+            display: flex;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+            color: #CBD5E1;
+        }
+        .analysis-suggestion-item:last-child {
+            border-bottom: none;
+        }
+        .analysis-suggestion-num {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.2);
+            color: #D4AF37;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        @media (max-width: 1024px) {
+            .upload-drop-zone { padding: 30px 15px; }
+            .chat-bubble { max-width: 90%; }
+        }
+        @media (max-width: 640px) {
+            .nav-tab-btn { padding: 6px 10px; font-size: 12px; }
+            .nav-tab-btn i { display: none; }
+            .upload-drop-zone { padding: 24px 12px; }
+            .chat-feature-card { padding: 8px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body class="min-h-screen">
-    <nav class="fixed top-0 left-0 right-0 bg-[rgba(30,41,59,0.7)] backdrop-blur-[12px] z-50 h-[64px] border-b border-[rgba(212,175,55,0.3)]">
-        <div class="max-w-[1400px] mx-auto px-10 h-full flex items-center">
-            <div class="flex items-center gap-2">
-                <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                    <path d="M18 2L22 13H34L24 20L27 32L18 25L9 32L12 20L2 13H14L18 2Z" fill="url(#goldGradient)" stroke="#D4AF37" stroke-width="1.5"/>
-                    <defs>
-                        <linearGradient id="goldGradient" x1="18" y1="2" x2="18" y2="32">
-                            <stop stop-color="#D4AF37"/><stop offset="1" stop-color="#B8860B"/>
-                        </linearGradient>
-                    </defs>
-                </svg>
-                <span class="text-xl font-semibold text-white">星途简历</span>
-            </div>
-        </div>
-    </nav>
+    <div id="cosmic-bg" class="fixed inset-0 pointer-events-none z-0"></div>
+    <canvas id="stardust-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
 
-    <main class="pt-[80px] pb-10">
-        <div class="max-w-[1400px] mx-auto px-10">
-            <div class="stepper-container glass-card mb-6">
-                <div class="flex items-center justify-between">
-                    <div class="stepper-step">
-                        <div class="stepper-number active" id="step-1-num">
-                            <i class="fa-solid fa-check" id="step-1-icon" style="display:none"></i>
-                            <span id="step-1-text">1</span>
-                        </div>
-                        <span class="stepper-label active" id="step-1-label">填写信息</span>
-                    </div>
-                    <div class="hidden sm:block w-[20%] h-[2px] bg-[rgba(212,175,55,0.3)]">
-                        <div class="h-full bg-[#D4AF37] transition-all duration-500" id="step-progress-1"></div>
-                    </div>
-                    <div class="stepper-step">
-                        <div class="stepper-number pending" id="step-2-num">
-                            <i class="fa-solid fa-check" id="step-2-icon" style="display:none"></i>
-                            <span id="step-2-text">2</span>
-                        </div>
-                        <span class="stepper-label" id="step-2-label">AI优化分析</span>
-                    </div>
-                    <div class="hidden sm:block w-[20%] h-[2px] bg-[rgba(212,175,55,0.3)]">
-                        <div class="h-full bg-[#D4AF37] transition-all duration-500" id="step-progress-2" style="width:0"></div>
-                    </div>
-                    <div class="stepper-step">
-                        <div class="stepper-number pending" id="step-3-num">
-                            <i class="fa-solid fa-check" id="step-3-icon" style="display:none"></i>
-                            <span id="step-3-text">3</span>
-                        </div>
-                        <span class="stepper-label" id="step-3-label">预览简历</span>
-                    </div>
-                    <div class="hidden sm:block w-[20%] h-[2px] bg-[rgba(212,175,55,0.3)]">
-                        <div class="h-full bg-[#D4AF37] transition-all duration-500" id="step-progress-3" style="width:0"></div>
-                    </div>
-                    <div class="stepper-step">
-                        <div class="stepper-number pending" id="step-4-num">
-                            <i class="fa-solid fa-check" id="step-4-icon" style="display:none"></i>
-                            <span id="step-4-text">4</span>
-                        </div>
-                        <span class="stepper-label" id="step-4-label">导出PDF</span>
-                    </div>
+    <div id="app-content" class="relative z-10">
+        <nav class="fixed top-0 left-0 right-0 bg-[rgba(30,41,59,0.7)] backdrop-blur-[12px] z-50 h-[64px] border-b border-[rgba(212,175,55,0.3)]">
+            <div class="max-w-[1400px] mx-auto px-10 h-full flex items-center justify-between">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="switchPage('editor')">
+                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                        <path d="M18 2L22 13H34L24 20L27 32L18 25L9 32L12 20L2 13H14L18 2Z" fill="url(#goldGradient)" stroke="#D4AF37" stroke-width="1.5"/>
+                        <defs>
+                            <linearGradient id="goldGradient" x1="18" y1="2" x2="18" y2="32">
+                                <stop stop-color="#D4AF37"/><stop offset="1" stop-color="#B8860B"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span class="text-xl font-semibold text-white">星途简历</span>
                 </div>
-            </div>
-
-            <div class="flex flex-col lg:flex-row gap-6">
-                <div class="lg:w-[45%]">
-                    <div class="flex justify-between items-center mb-4">
-                        <button type="button" id="fill-example-btn" class="text-sm text-[#D4AF37] hover:text-[#F4C430] flex items-center gap-1">
-                            <i class="fa-solid fa-file-text"></i> 📝 填入示例数据
-                        </button>
-                        <span class="text-sm text-gray-400" id="progress-text">已完成 0/8 个板块</span>
-                    </div>
-
-                    <div class="glass-card form-section" data-section="0">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i>
-                                选择简历模板
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <div id="templates-container" class="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2"></div>
-                            <div class="mt-3 text-xs text-gray-400">
-                                <i class="fa-solid fa-lightbulb text-[#D4AF37] mr-1"></i>
-                                已选择：<span id="selected-template-name" class="text-[#D4AF37] font-medium">应届生校招全能（默认）</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card mt-6 form-section" data-section="1">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 求职意向
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>目标岗位</label>
-                                    <input type="text" id="targetJob" placeholder="例如：前端开发工程师" class="stellar-input" />
-                                    <div class="field-error" id="targetJob-error"></div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm text-gray-300 mb-1">期望城市</label>
-                                        <input type="text" id="expectedCity" placeholder="北京、上海" class="stellar-input" />
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm text-gray-300 mb-1">工作类型</label>
-                                        <select id="jobType" class="stellar-input bg-[rgba(15,23,42,0.3)] text-white">
-                                            <option value="fulltime">全职</option>
-                                            <option value="internship">实习</option>
-                                            <option value="parttime">兼职</option>
-                                            <option value="campus">校招</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card mt-6 form-section" data-section="2">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 基本信息
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>姓名</label>
-                                    <input type="text" id="name" placeholder="请输入姓名" class="stellar-input" />
-                                    <div class="field-error" id="name-error"></div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>手机</label>
-                                        <input type="text" id="phone" placeholder="138xxxx8888" class="stellar-input" />
-                                        <div class="field-error" id="phone-error"></div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>邮箱</label>
-                                        <input type="email" id="email" placeholder="name@email.com" class="stellar-input" />
-                                        <div class="field-error" id="email-error"></div>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm text-gray-300 mb-1">个人照片URL</label>
-                                    <input type="url" id="photo" placeholder="选填" class="stellar-input" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card mt-6 form-section" data-section="3">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 教育背景
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>学校</label>
-                                    <input type="text" id="school" placeholder="学校名称" class="stellar-input" />
-                                    <div class="field-error" id="school-error"></div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>专业</label>
-                                        <input type="text" id="major" placeholder="专业名称" class="stellar-input" />
-                                        <div class="field-error" id="major-error"></div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>学历</label>
-                                        <select id="educationLevel" class="stellar-input bg-[rgba(15,23,42,0.3)] text-white">
-                                            <option value="undergraduate">本科</option>
-                                            <option value="master">硕士</option>
-                                            <option value="phd">博士</option>
-                                            <option value="college">大专</option>
-                                            <option value="other">其他</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>毕业时间</label>
-                                        <input type="text" id="graduation" placeholder="2024.06" class="stellar-input" />
-                                        <div class="field-error" id="graduation-error"></div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm text-gray-300 mb-1">GPA</label>
-                                        <input type="text" id="gpa" placeholder="3.8/4.0" class="stellar-input" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm text-gray-300 mb-1">主修课程</label>
-                                    <input type="text" id="courses" placeholder="数据结构、操作系统..." class="stellar-input" />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card mt-6 form-section" data-section="4">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 个人链接
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <div class="space-y-4">
-                                <input type="url" id="github" placeholder="GitHub主页" class="stellar-input" />
-                                <input type="url" id="blog" placeholder="技术博客" class="stellar-input" />
-                                <input type="url" id="portfolio" placeholder="作品集" class="stellar-input" />
-                                <input type="url" id="personalWebsite" placeholder="个人网站" class="stellar-input" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card mt-6 form-section" data-section="5">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 我的经历
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <div id="experiences-container"></div>
-                            <button type="button" id="add-experience-btn" class="w-full h-[44px] border-2 border-dashed border-[#D4AF37] bg-transparent text-[#D4AF37] rounded-[12px] font-medium flex items-center justify-center gap-2 hover:bg-[rgba(212,175,55,0.1)] cursor-pointer">
-                                <i class="fa-solid fa-plus"></i> 添加一条经历
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="glass-card mt-6 form-section" data-section="6">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 技能特长
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm text-gray-300 mb-1">专业技能</label>
-                                    <textarea id="skills" placeholder="Python、React..." class="stellar-textarea"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-sm text-gray-300 mb-1">证书/奖项</label>
-                                    <textarea id="certificates" placeholder="英语六级..." class="stellar-textarea"></textarea>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="glass-card mt-6 form-section" data-section="7">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 自我评价
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <textarea id="selfEvaluation" placeholder="留空将由AI自动生成" class="stellar-textarea"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="glass-card mt-6 form-section" data-section="8">
-                        <div class="section-header">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 目标岗位JD
-                            </h2>
-                            <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
-                        </div>
-                        <div class="section-content mt-4">
-                            <textarea id="jd" placeholder="粘贴招聘描述，匹配度越高越好" class="stellar-textarea h-[150px]"></textarea>
-                            <div class="text-right text-xs text-gray-400 mt-1" id="jd-count">0/5000</div>
-                        </div>
-                    </div>
-
-                    <button id="generate-btn" disabled class="w-full h-[48px] gold-gradient-btn rounded-[12px] font-semibold flex items-center justify-center gap-2 mt-6">
-                        <i class="fa-solid fa-sparkles"></i><span>请完善必填信息</span>
+                <div class="flex items-center gap-1">
+                    <button id="nav-editor-btn" onclick="switchPage('editor')" class="nav-tab-btn active px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                        <i class="fa-solid fa-pen-to-square mr-1"></i>在线编辑
+                    </button>
+                    <button id="nav-upload-btn" onclick="switchPage('upload')" class="nav-tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                        <i class="fa-solid fa-cloud-arrow-up mr-1"></i>简历上传
                     </button>
                 </div>
+            </div>
+        </nav>
 
-                <div class="lg:w-[55%]">
-                    <div class="glass-card min-h-[300px]">
-                        <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 优化结果（STAR法则版）
-                        </h2>
-                        <div id="output-area" class="min-h-[200px]">
-                            <div class="flex flex-col items-center justify-center h-[200px] text-gray-400">
-                                <i class="fa-solid fa-file-text text-4xl text-gray-600 mb-4"></i>
-                                <p class="text-sm">请在左侧填写信息并点击生成</p>
+        <main class="pt-[80px] pb-10">
+            <div id="page-editor" class="max-w-[1400px] mx-auto px-10">
+                <div class="stepper-container glass-card mb-6">
+                    <div class="flex items-center justify-between">
+                        <div class="stepper-step">
+                            <div class="stepper-number active" id="step-1-num">
+                                <i class="fa-solid fa-check" id="step-1-icon" style="display:none"></i>
+                                <span id="step-1-text">1</span>
                             </div>
+                            <span class="stepper-label active" id="step-1-label">填写信息</span>
+                        </div>
+                        <div class="hidden sm:block w-[20%] h-[2px] bg-[rgba(212,175,55,0.3)]">
+                            <div class="h-full bg-[#D4AF37] transition-all duration-500" id="step-progress-1"></div>
+                        </div>
+                        <div class="stepper-step">
+                            <div class="stepper-number pending" id="step-2-num">
+                                <i class="fa-solid fa-check" id="step-2-icon" style="display:none"></i>
+                                <span id="step-2-text">2</span>
+                            </div>
+                            <span class="stepper-label" id="step-2-label">AI优化分析</span>
+                        </div>
+                        <div class="hidden sm:block w-[20%] h-[2px] bg-[rgba(212,175,55,0.3)]">
+                            <div class="h-full bg-[#D4AF37] transition-all duration-500" id="step-progress-2" style="width:0"></div>
+                        </div>
+                        <div class="stepper-step">
+                            <div class="stepper-number pending" id="step-3-num">
+                                <i class="fa-solid fa-check" id="step-3-icon" style="display:none"></i>
+                                <span id="step-3-text">3</span>
+                            </div>
+                            <span class="stepper-label" id="step-3-label">预览简历</span>
+                        </div>
+                        <div class="hidden sm:block w-[20%] h-[2px] bg-[rgba(212,175,55,0.3)]">
+                            <div class="h-full bg-[#D4AF37] transition-all duration-500" id="step-progress-3" style="width:0"></div>
+                        </div>
+                        <div class="stepper-step">
+                            <div class="stepper-number pending" id="step-4-num">
+                                <i class="fa-solid fa-check" id="step-4-icon" style="display:none"></i>
+                                <span id="step-4-text">4</span>
+                            </div>
+                            <span class="stepper-label" id="step-4-label">导出文档</span>
                         </div>
                     </div>
+                </div>
 
-                    <div id="suggestions-panel" class="suggestions-panel" style="display:none;">
-                        <div id="suggestions-content"></div>
-                    </div>
-
-                    <div id="resume-section" class="glass-card mt-6" style="display:none;">
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="lg:w-[45%]">
                         <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-lg font-semibold text-white flex items-center gap-2">
-                                <i class="fa-solid fa-file-contract text-[#D4AF37] text-sm"></i> 完整简历预览
-                            </h2>
-                            <div class="flex gap-2">
-                                <button onclick="refreshResume()" class="px-3 py-1.5 rounded-lg text-sm border border-[#D4AF37] text-[#D4AF37] hover:bg-[rgba(212,175,55,0.1)]">
-                                    <i class="fa-solid fa-rotate-right"></i> 重新生成
-                                </button>
-                                <button onclick="exportResume()" class="gold-gradient-btn px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
-                                    <i class="fa-solid fa-download"></i> 导出PDF
+                            <button type="button" id="fill-example-btn" class="text-sm text-[#D4AF37] hover:text-[#F4C430] flex items-center gap-1">
+                                <i class="fa-solid fa-file-text"></i> \ud83d\udcdd \u586b\u5165\u793a\u4f8b\u6570\u636e
+                            </button>
+                            <span class="text-sm text-gray-400" id="progress-text">已完成 0/8 个板块</span>
+                        </div>
+
+                        <div class="glass-card form-section" data-section="0">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i>
+                                    选择简历模板
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <div id="templates-container" class="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2"></div>
+                                <div class="mt-3 text-xs text-gray-400">
+                                    <i class="fa-solid fa-lightbulb text-[#D4AF37] mr-1"></i>
+                                    已选择：<span id="selected-template-name" class="text-[#D4AF37] font-medium">应届生校招全能（默认）</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card mt-6 form-section" data-section="1">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 求职意向
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>目标岗位</label>
+                                        <input type="text" id="targetJob" placeholder="例如：前端开发工程师" class="stellar-input" />
+                                        <div class="field-error" id="targetJob-error"></div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-sm text-gray-300 mb-1">期望城市</label>
+                                            <input type="text" id="expectedCity" placeholder="北京、上海" class="stellar-input" />
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm text-gray-300 mb-1">工作类型</label>
+                                            <select id="jobType" class="stellar-input bg-[rgba(15,23,42,0.3)] text-white">
+                                                <option value="fulltime">全职</option>
+                                                <option value="internship">实习</option>
+                                                <option value="parttime">兼职</option>
+                                                <option value="campus">校招</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card mt-6 form-section" data-section="2">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 基本信息
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>姓名</label>
+                                        <input type="text" id="name" placeholder="请输入姓名" class="stellar-input" />
+                                        <div class="field-error" id="name-error"></div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>手机</label>
+                                            <input type="text" id="phone" placeholder="138xxxx8888" class="stellar-input" />
+                                            <div class="field-error" id="phone-error"></div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>邮箱</label>
+                                            <input type="email" id="email" placeholder="name@email.com" class="stellar-input" />
+                                            <div class="field-error" id="email-error"></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-1">个人照片URL</label>
+                                        <input type="url" id="photo" placeholder="选填" class="stellar-input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card mt-6 form-section" data-section="3">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 教育背景
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>学校</label>
+                                        <input type="text" id="school" placeholder="学校名称" class="stellar-input" />
+                                        <div class="field-error" id="school-error"></div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>专业</label>
+                                            <input type="text" id="major" placeholder="专业名称" class="stellar-input" />
+                                            <div class="field-error" id="major-error"></div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>学历</label>
+                                            <select id="educationLevel" class="stellar-input bg-[rgba(15,23,42,0.3)] text-white">
+                                                <option value="undergraduate">本科</option>
+                                                <option value="master">硕士</option>
+                                                <option value="phd">博士</option>
+                                                <option value="college">大专</option>
+                                                <option value="other">其他</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-sm text-gray-300 mb-1"><span class="text-red-500 mr-1">*</span>毕业时间</label>
+                                            <input type="text" id="graduation" placeholder="2024.06" class="stellar-input" />
+                                            <div class="field-error" id="graduation-error"></div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm text-gray-300 mb-1">GPA</label>
+                                            <input type="text" id="gpa" placeholder="3.8/4.0" class="stellar-input" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-1">主修课程</label>
+                                        <input type="text" id="courses" placeholder="数据结构、操作系统..." class="stellar-input" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card mt-6 form-section" data-section="4">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 个人链接
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <div class="space-y-4">
+                                    <input type="url" id="github" placeholder="GitHub主页" class="stellar-input" />
+                                    <input type="url" id="blog" placeholder="技术博客" class="stellar-input" />
+                                    <input type="url" id="portfolio" placeholder="作品集" class="stellar-input" />
+                                    <input type="url" id="personalWebsite" placeholder="个人网站" class="stellar-input" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card mt-6 form-section" data-section="5">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 我的经历
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <div id="experiences-container"></div>
+                                <button type="button" id="add-experience-btn" class="w-full h-[44px] border-2 border-dashed border-[#D4AF37] bg-transparent text-[#D4AF37] rounded-[12px] font-medium flex items-center justify-center gap-2 hover:bg-[rgba(212,175,55,0.1)] cursor-pointer">
+                                    <i class="fa-solid fa-plus"></i> 添加一条经历
                                 </button>
                             </div>
                         </div>
-                        <div class="text-xs text-gray-400 mb-3">
-                            <i class="fa-solid fa-circle-info mr-1"></i> 下方为AI生成的完整简历，可直接打印或保存为PDF
+
+                        <div class="glass-card mt-6 form-section" data-section="6">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 技能特长
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-1">专业技能</label>
+                                        <textarea id="skills" placeholder="Python、React..." class="stellar-textarea"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm text-gray-300 mb-1">证书/奖项</label>
+                                        <textarea id="certificates" placeholder="英语六级..." class="stellar-textarea"></textarea>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="resume-preview-wrapper p-[15mm]" id="resume-preview-container"></div>
+
+                        <div class="glass-card mt-6 form-section" data-section="7">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 自我评价
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <textarea id="selfEvaluation" placeholder="留空将由AI自动生成" class="stellar-textarea"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="glass-card mt-6 form-section" data-section="8">
+                            <div class="section-header">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 目标岗位JD
+                                </h2>
+                                <span class="section-toggle text-[#D4AF37]"><i class="fa-solid fa-chevron-up"></i></span>
+                            </div>
+                            <div class="section-content mt-4">
+                                <textarea id="jd" placeholder="粘贴招聘描述，匹配度越高越好" class="stellar-textarea h-[150px]"></textarea>
+                                <div class="text-right text-xs text-gray-400 mt-1" id="jd-count">0/5000</div>
+                            </div>
+                        </div>
+
+                        <button id="generate-btn" disabled class="w-full h-[48px] gold-gradient-btn rounded-[12px] font-semibold flex items-center justify-center gap-2 mt-6">
+                            <i class="fa-solid fa-sparkles"></i><span>请完善必填信息</span>
+                        </button>
+                    </div>
+
+                    <div class="lg:w-[55%]">
+                        <div class="glass-card min-h-[300px]">
+                            <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-star text-[#D4AF37] text-sm"></i> 优化结果（STAR法则版）
+                            </h2>
+                            <div id="output-area" class="min-h-[200px]">
+                                <div class="flex flex-col items-center justify-center h-[200px] text-gray-400">
+                                    <i class="fa-solid fa-file-text text-4xl text-gray-600 mb-4"></i>
+                                    <p class="text-sm">请在左侧填写信息并点击生成</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="suggestions-panel" class="suggestions-panel" style="display:none;">
+                            <div id="suggestions-content"></div>
+                        </div>
+
+                        <div id="resume-section" class="glass-card mt-6" style="display:none;">
+                            <div class="flex justify-between items-center mb-4">
+                                <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-file-contract text-[#D4AF37] text-sm"></i> 完整简历预览
+                                </h2>
+                                <div class="flex gap-2 items-center">
+                                    <button onclick="refreshResume()" class="px-3 py-1.5 rounded-lg text-sm border border-[#D4AF37] text-[#D4AF37] hover:bg-[rgba(212,175,55,0.1)]">
+                                        <i class="fa-solid fa-rotate-right"></i> 重新生成
+                                    </button>
+                                    <div class="relative" id="export-dropdown-wrapper">
+                                        <button onclick="toggleExportMenu()" class="gold-gradient-btn px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2">
+                                            <i class="fa-solid fa-download"></i> 导出文档 <i class="fa-solid fa-chevron-down text-xs ml-1"></i>
+                                        </button>
+                                        <div id="export-dropdown-menu" class="absolute right-0 top-full mt-1 bg-[#1E293B] border border-[rgba(212,175,55,0.3)] rounded-lg shadow-xl z-50 min-w-[160px] overflow-hidden" style="display:none;">
+                                            <button onclick="exportResume()" class="w-full px-4 py-2.5 text-sm text-white hover:bg-[rgba(212,175,55,0.15)] flex items-center gap-3 transition-colors">
+                                                <i class="fa-solid fa-file-pdf text-red-400"></i> 导出为 PDF
+                                            </button>
+                                            <button onclick="exportWord()" id="export-word-btn" class="w-full px-4 py-2.5 text-sm text-white hover:bg-[rgba(212,175,55,0.15)] flex items-center gap-3 transition-colors">
+                                                <i class="fa-solid fa-file-word text-blue-400"></i> 导出为 Word
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-400 mb-3">
+                                <i class="fa-solid fa-circle-info mr-1"></i> 下方为AI生成的完整简历，支持导出为PDF或Word格式，Word格式便于后续编辑
+                            </div>
+                            <div id="export-status" class="mb-3" style="display:none;">
+                                <div class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm" id="export-status-content"></div>
+                            </div>
+                            <div class="resume-preview-wrapper p-[15mm]" id="resume-preview-container"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <script>
-        const API_BASE_URL = 'https://xingtujianli-production.up.railway.app';
-        let experiences = [];
-        let experienceIdCounter = 1;
-        let generatedResults = [];
-        let allSuggestions = [];
-        let selectedTemplateId = 'template_15';
-
-        const RESUME_TEMPLATES = {
-            "template_01": {"name":"经典商务单栏","style":"简约商务风","desc":"最安全的通用选择，ATS兼容性100%","color":"#1a365d","layout":"单栏","font":"微软雅黑/Arial","icon":"fa-briefcase","best_for":["财务","HR","行政","管培生","通用"]},
-            "template_02": {"name":"互联网技术双栏","style":"互联网风","desc":"技术岗专属，技能前置展示","color":"#2563eb","layout":"左右分栏(3:7)","font":"Inter/思源黑体","icon":"fa-code","best_for":["Java开发","前端","后端","算法","大数据","测试开发"]},
-            "template_03": {"name":"金融投行精英","style":"简约商务风","desc":"极致专业，信息密度极高","color":"#000000","layout":"单栏紧凑","font":"Times New Roman/宋体","icon":"fa-chart-line","best_for":["投行分析师","研究员","PE/VC","四大","金融"]},
-            "template_04": {"name":"产品经理思维","style":"互联网风","desc":"突出产品思维和数据成果","color":"#f97316","layout":"单栏","font":"现代无衬线字体","icon":"fa-lightbulb","best_for":["产品经理","产品运营","B端产品","需求分析"]},
-            "template_05": {"name":"运营增长数据","style":"互联网风","desc":"数据驱动，增长指标突出","color":"#10b981","layout":"单栏+数据卡片","font":"清晰无衬线字体","icon":"fa-arrow-trend-up","best_for":["用户运营","内容运营","增长黑客","新媒体","营销"]},
-            "template_06": {"name":"国企央企正式","style":"国企/体制内风","desc":"政治面貌前置，稳重正式","color":"#dc2626","layout":"表格化单栏","font":"宋体/仿宋","icon":"fa-building-columns","best_for":["公务员","事业单位","国企","央企","选调生"]},
-            "template_07": {"name":"创意设计作品","style":"创意设计风","desc":"设计感第一，作品展示充分","color":"#8b5cf6","layout":"左侧信息栏+右侧作品区","font":"多种字体组合","icon":"fa-palette","best_for":["UI/UX设计","平面设计","视觉设计","交互设计","创意"]},
-            "template_08": {"name":"学术科研专业","style":"学术科研风","desc":"LaTeX风格，论文为核心","color":"#000000","layout":"学术论文式单栏","font":"Times New Roman/Computer Modern","icon":"fa-graduation-cap","best_for":["博士申请","高校教师","研究员","科研院所"]},
-            "template_09": {"name":"市场营销品牌","style":"创意商务风","desc":"Campaign案例突出，品牌思维","color":"#ef4444","layout":"现代商务单栏","font":"专业商务字体","icon":"fa-bullhorn","best_for":["品牌经理","市场推广","公关","数字营销","广告"]},
-            "template_10": {"name":"医疗健康专业","style":"专业严谨风","desc":"资质证书前置，临床经验","color":"#059669","layout":"规整单栏","font":"清晰标准字体","icon":"fa-user-doctor","best_for":["医生","护士","医药代表","医疗行政","健康管理"]},
-            "template_11": {"name":"制造业工程","style":"专业技术风","desc":"技术认证突出，产线经验","color":"#1e40af","layout":"结构化单栏","font":"标准技术文档字体","icon":"fa-industry","best_for":["工艺工程师","机械工程师","生产管理","质量控制","供应链"]},
-            "template_12": {"name":"教育培训行业","style":"专业亲和风","desc":"教学成果突出，亲和力强","color":"#3b82f6","layout":"整洁单栏","font":"清晰易读字体","icon":"fa-chalkboard-user","best_for":["教师","教研","课程设计","培训师","教育产品"]},
-            "template_13": {"name":"行政人事管理","style":"稳重商务风","desc":"协调能力突出，流程优化","color":"#4b5563","layout":"清晰规整单栏","font":"标准商务字体","icon":"fa-clipboard-list","best_for":["行政专员","HR","办公室主任","总经理助理"]},
-            "template_14": {"name":"咨询管理精英","style":"高端商务风","desc":"麦肯锡风格，极度结构化","color":"#1e3a8a","layout":"高密度单栏","font":"Times New Roman/宋体","icon":"fa-chess-king","best_for":["管理咨询","战略咨询","IT咨询","企业顾问","分析师"]},
-            "template_15": {"name":"应届生校招全能","style":"简约商务风","desc":"应届生专属，ATS友好","color":"#3b82f6","layout":"标准单栏","font":"微软雅黑","icon":"fa-user-graduate","best_for":["应届生校招","通用","无明确方向"]},
-            "template_16": {"name":"社招3-5年进阶","style":"专业商务风","desc":"职业成长清晰，能力层级明确","color":"#0369a1","layout":"经历排序单栏","font":"成熟稳重字体","icon":"fa-stairs","best_for":["3-5年经验","主管","高级专员","资深工程师"]},
-            "template_17": {"name":"社招5年+管理","style":"高端商务风","desc":"管理能力清晰，战略高度","color":"#1e40af","layout":"大气双栏/单栏","font":"权威感字体","icon":"fa-crown","best_for":["5年+经验","经理","总监","部门负责人"]},
-            "template_18": {"name":"转行跨界桥梁","style":"能力迁移风","desc":"可迁移能力前置，衔接新旧职业","color":"#7c3aed","layout":"能力模块前置单栏","font":"专业清晰字体","icon":"fa-shuffle","best_for":["跨行业求职","职业转型","技能迁移"]}
-        };
-
-        function loadTemplates() {
-            const container = document.getElementById('templates-container');
-            const styleGroups = {};
-            Object.entries(RESUME_TEMPLATES).forEach(([id, tmpl]) => {
-                if (!styleGroups[tmpl.style]) styleGroups[tmpl.style] = [];
-                styleGroups[tmpl.style].push({ id, ...tmpl });
-            });
-            let html = '';
-            Object.entries(styleGroups).forEach(([style, templates]) => {
-                html += `<div class="mb-3"><div class="text-xs text-gray-400 mb-2 font-medium">${style}</div>`;
-                templates.forEach(tmpl => {
-                    const isSelected = tmpl.id === selectedTemplateId;
-                    const tags = tmpl.best_for ? tmpl.best_for.map(tag => `<span class="template-tag">${tag}</span>`).join('') : '';
-                    html += `
-                        <div class="template-card ${isSelected ? 'selected' : ''}" data-template-id="${tmpl.id}" onclick="selectTemplate('${tmpl.id}')">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="template-color-dot" style="background:${tmpl.color}"></span>
-                                <span class="font-semibold text-white text-sm">${tmpl.name}</span>
-                                <i class="fa-solid ${tmpl.icon} text-[#D4AF37] text-xs ml-auto"></i>
-                            </div>
-                            <div class="text-xs text-gray-400 mb-2">${tmpl.desc}</div>
-                            <div class="flex flex-wrap gap-1">${tags}</div>
-                            <div class="text-xs text-gray-500 mt-1">
-                                <i class="fa-solid fa-layer-group mr-1"></i>${tmpl.layout} <span class="mx-1">|</span> <i class="fa-solid fa-font mr-1"></i>${tmpl.font}
-                            </div>
-                        </div>`;
-                });
-                html += '</div>';
-            });
-            container.innerHTML = html;
-            updateSelectedTemplateDisplay();
-        }
-
-        function selectTemplate(templateId) {
-            selectedTemplateId = templateId;
-            document.querySelectorAll('.template-card').forEach(card => {
-                card.classList.toggle('selected', card.dataset.templateId === templateId);
-            });
-            updateSelectedTemplateDisplay();
-        }
-
-        function updateSelectedTemplateDisplay() {
-            const tmpl = RESUME_TEMPLATES[selectedTemplateId];
-            const display = document.getElementById('selected-template-name');
-            if (tmpl && display) display.textContent = `${tmpl.name}（${tmpl.style}）`;
-        }
-
-        function createExperienceCard(id) {
-            const card = document.createElement('div');
-            card.className = 'experience-card';
-            card.dataset.id = id;
-            const seqNum = experiencesContainer.children.length + 1;
-            card.innerHTML = `
-                <div class="flex justify-between items-center mb-3 pb-3 border-b border-[rgba(212,175,55,0.2)]">
-                    <div class="flex items-center gap-2 font-semibold text-white text-sm">
-                        <span class="text-[#D4AF37] text-base font-bold">${seqNum}</span><span class="text-gray-400">经历</span>
-                    </div>
-                    <button type="button" class="text-red-500 hover:text-red-600 p-1" onclick="deleteExperience(${id})">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </div>
-                <div class="experience-fields">
-                    <div class="experience-field">
-                        <label><span class="text-red-500 mr-1">*</span>经历类型</label>
-                        <select id="exp-type-${id}" class="bg-[rgba(15,23,42,0.3)] border border-[rgba(255,255,255,0.2)] rounded-lg text-white h-[38px] px-3">
-                            <option value="internship">实习经历</option>
-                            <option value="campus">校园项目</option>
-                            <option value="club">社团活动</option>
-                            <option value="parttime">兼职经历</option>
-                            <option value="research">科研经历</option>
-                        </select>
-                    </div>
-                    <div class="experience-field">
-                        <label><span class="text-red-500 mr-1">*</span>职位/角色</label>
-                        <input type="text" id="exp-role-${id}" placeholder="例如：前端开发实习生" class="bg-[rgba(15,23,42,0.3)] border border-[rgba(255,255,255,0.2)] rounded-lg text-white h-[38px] px-3">
-                    </div>
-                    <div class="experience-field">
-                        <label><span class="text-red-500 mr-1">*</span>公司/机构</label>
-                        <input type="text" id="exp-company-${id}" placeholder="例如：某某科技有限公司" class="bg-[rgba(15,23,42,0.3)] border border-[rgba(255,255,255,0.2)] rounded-lg text-white h-[38px] px-3">
-                    </div>
-                    <div class="experience-field">
-                        <label><span class="text-red-500 mr-1">*</span>时间段</label>
-                        <input type="text" id="exp-date-${id}" placeholder="例如：2023.06-2024.03" class="bg-[rgba(15,23,42,0.3)] border border-[rgba(255,255,255,0.2)] rounded-lg text-white h-[38px] px-3">
-                    </div>
-                </div>
-                <div class="experience-field experience-field-full">
-                    <label><span class="text-red-500 mr-1">*</span>职责与成就</label>
-                    <div class="rich-editor">
-                        <div class="rich-editor-toolbar">
-                            <button type="button" class="rich-editor-btn" onclick="formatText('bold', ${id})"><i class="fa-solid fa-bold"></i></button>
-                            <button type="button" class="rich-editor-btn" onclick="formatText('italic', ${id})"><i class="fa-solid fa-italic"></i></button>
-                            <button type="button" class="rich-editor-btn" onclick="formatText('underline', ${id})"><i class="fa-solid fa-underline"></i></button>
-                            <div class="w-[1px] bg-gray-600 mx-1"></div>
-                            <button type="button" class="rich-editor-btn" onclick="formatText('insertUnorderedList', ${id})"><i class="fa-solid fa-list-ul"></i></button>
-                            <button type="button" class="rich-editor-btn" onclick="formatText('insertOrderedList', ${id})"><i class="fa-solid fa-list-ol"></i></button>
-                        </div>
-                        <div class="rich-editor-content" id="exp-content-${id}" contenteditable="true" placeholder="请描述您的工作内容、职责和取得的成就..."></div>
-                    </div>
-                </div>`;
-
-            setTimeout(() => {
-                ['type','role','company','date'].forEach(field => {
-                    const el = document.getElementById(`exp-${field}-${id}`);
-                    if (!el) return;
-                    // 修复：select 用 change 事件，input 用 input 事件
-                    const evt = el.tagName === 'SELECT' ? 'change' : 'input';
-                    el.addEventListener(evt, () => { updateExperience(id); checkFormValidity(); });
-                });
-                const contentEl = document.getElementById(`exp-content-${id}`);
-                if (contentEl) contentEl.addEventListener('input', () => { updateExperience(id); checkFormValidity(); });
-            }, 0);
-            return card;
-        }
-
-        function addExperience() {
-            const id = experienceIdCounter++;
-            experiences.push({ id, type: 'internship', role: '', company: '', date: '', content: '' });
-            experiencesContainer.appendChild(createExperienceCard(id));
-            updateCardNumbers();
-            checkFormValidity();
-        }
-
-        function deleteExperience(id) {
-            if (experiences.length <= 1) { alert('至少需要保留一条经历！'); return; }
-            experiences = experiences.filter(exp => exp.id !== id);
-            document.querySelector(`.experience-card[data-id="${id}"]`)?.remove();
-            updateCardNumbers();
-            checkFormValidity();
-        }
-
-        function updateCardNumbers() {
-            document.querySelectorAll('.experience-card').forEach((card, index) => {
-                const num = card.querySelector('.text-\\[\\#D4AF37\\]');
-                if (num) num.textContent = index + 1;
-            });
-        }
-
-        function updateExperience(id) {
-            const exp = experiences.find(e => e.id === id);
-            if (!exp) return;
-            exp.type = document.getElementById(`exp-type-${id}`)?.value || '';
-            exp.role = document.getElementById(`exp-role-${id}`)?.value || '';
-            exp.company = document.getElementById(`exp-company-${id}`)?.value || '';
-            exp.date = document.getElementById(`exp-date-${id}`)?.value || '';
-            exp.content = document.getElementById(`exp-content-${id}`)?.innerHTML || '';
-        }
-
-        function formatText(command, id) {
-            document.execCommand(command, false, null);
-            document.getElementById(`exp-content-${id}`)?.focus();
-            updateExperience(id);
-            checkFormValidity();
-        }
-
-        // 修复：手机号自动忽略空格、横杠、破折号
-        function validatePhone(v) { 
-            if (!v) return false;
-            const cleaned = v.replace(/[\s\-—]/g, ''); 
-            return /^1[3-9]\d{9}$/.test(cleaned); 
-        }
-        function validateEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
-
-        function validateField(fieldId, required=false, validator=null) {
-            const field = document.getElementById(fieldId);
-            const errorEl = document.getElementById(`${fieldId}-error`);
-            if (!field) return true;
-            const value = field.value.trim();
-            let isValid = true, errorText = '';
-            if (required && !value) { isValid = false; errorText = '此项为必填'; }
-            else if (validator && value && !validator(value)) {
-                isValid = false;
-                if (fieldId === 'phone') errorText = '请输入正确的11位手机号码';
-                else if (fieldId === 'email') errorText = '请输入正确的邮箱格式';
-            }
-            field.classList.toggle('error', !isValid);
-            if (errorEl) errorEl.textContent = errorText;
-            return isValid;
-        }
-
-        // 修复：经历内容正则 << 改为 <，并清理 &nbsp;
-        function validateExperience(exp) {
-            const roleField = document.getElementById(`exp-role-${exp.id}`);
-            const companyField = document.getElementById(`exp-company-${exp.id}`);
-            const dateField = document.getElementById(`exp-date-${exp.id}`);
-            const contentField = document.getElementById(`exp-content-${exp.id}`);
-            let isValid = true;
-            
-            if (!exp.role.trim()) { roleField?.classList.add('error'); isValid = false; } 
-            else { roleField?.classList.remove('error'); }
-            
-            if (!exp.company.trim()) { companyField?.classList.add('error'); isValid = false; } 
-            else { companyField?.classList.remove('error'); }
-            
-            if (!exp.date.trim()) { dateField?.classList.add('error'); isValid = false; } 
-            else { dateField?.classList.remove('error'); }
-            
-            // 修复：正确清除 HTML 标签、&nbsp; 和空白，判断实质内容
-            const textContent = exp.content
-                .replace(/<<[^>]*>/g, ' ')     // 修复：<< 改为 <
-                .replace(/&nbsp;/gi, ' ')
-                .replace(/&lt;|&gt;/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
-            
-            const editorEl = contentField?.closest('.rich-editor');
-            if (!textContent) { 
-                editorEl?.classList.add('error'); 
-                isValid = false; 
-            } else { 
-                editorEl?.classList.remove('error'); 
-            }
-            return isValid;
-        }
-
-        // 修复：按钮精确提示缺失项
-        function checkFormValidity() {
-            let completedSections = 0;
-            
-            const vTargetJob = validateField('targetJob', true);
-            const vName = validateField('name', true);
-            const vPhone = validateField('phone', true, validatePhone);
-            const vEmail = validateField('email', true, validateEmail);
-            const vSchool = validateField('school', true);
-            const vMajor = validateField('major', true);
-            const vGraduation = validateField('graduation', true);
-
-            if (document.getElementById('targetJob').value.trim()) completedSections++;
-            if (document.getElementById('name').value.trim() && document.getElementById('phone').value.trim() && document.getElementById('email').value.trim()) completedSections++;
-            if (document.getElementById('school').value.trim() && document.getElementById('major').value.trim() && document.getElementById('graduation').value.trim()) completedSections++;
-            if (document.getElementById('github').value.trim() || document.getElementById('blog').value.trim() || document.getElementById('portfolio').value.trim() || document.getElementById('personalWebsite').value.trim()) completedSections++;
-
-            const hasValidExperiences = experiences.length > 0 && experiences.every(exp => validateExperience(exp));
-            if (hasValidExperiences) completedSections++;
-            if (document.getElementById('skills').value.trim() || document.getElementById('certificates').value.trim()) completedSections++;
-            if (document.getElementById('selfEvaluation').value.trim()) completedSections++;
-            if (document.getElementById('jd').value.trim()) completedSections++;
-
-            document.getElementById('progress-text').textContent = `已完成 ${Math.min(completedSections, 8)}/8 个板块`;
-
-            // 收集具体缺失项
-            const missing = [];
-            if (!document.getElementById('targetJob').value.trim()) missing.push('目标岗位');
-            if (!document.getElementById('name').value.trim()) missing.push('姓名');
-            if (!validatePhone(document.getElementById('phone').value.trim())) missing.push('手机号');
-            if (!validateEmail(document.getElementById('email').value.trim())) missing.push('邮箱');
-            if (!document.getElementById('school').value.trim()) missing.push('学校');
-            if (!document.getElementById('major').value.trim()) missing.push('专业');
-            if (!document.getElementById('graduation').value.trim()) missing.push('毕业时间');
-            if (!hasValidExperiences) missing.push('经历（职位/公司/时间/描述）');
-            
-            const hasTargetOrJd = document.getElementById('targetJob').value.trim() || document.getElementById('jd').value.trim();
-            if (!hasTargetOrJd) missing.push('目标岗位或JD');
-
-            const isFormValid = missing.length === 0;
-
-            if (isFormValid) {
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = '<i class="fa-solid fa-sparkles"></i><span>✨ 生成STAR法则优化版</span>';
-            } else {
-                generateBtn.disabled = true;
-                const tip = missing.slice(0, 3).join('、') + (missing.length > 3 ? `等${missing.length}项` : '');
-                generateBtn.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i><span>待完善：${tip}</span>`;
-            }
-        }
-
-        const generateBtn = document.getElementById('generate-btn');
-
-        generateBtn.addEventListener('click', async () => {
-            if (generateBtn.disabled) return;
-            generateBtn.disabled = true;
-            generateBtn.innerHTML = '<span class="loading-spinner"></span><span>生成中...</span>';
-            updateStep(2);
-
-            try {
-                const payload = {
-                    targetJob: document.getElementById('targetJob').value.trim(),
-                    expectedCity: document.getElementById('expectedCity').value.trim(),
-                    jobType: document.getElementById('jobType').value,
-                    name: document.getElementById('name').value.trim(),
-                    phone: document.getElementById('phone').value.trim(),
-                    email: document.getElementById('email').value.trim(),
-                    photo: document.getElementById('photo').value.trim(),
-                    github: document.getElementById('github').value.trim(),
-                    blog: document.getElementById('blog').value.trim(),
-                    portfolio: document.getElementById('portfolio').value.trim(),
-                    personalWebsite: document.getElementById('personalWebsite').value.trim(),
-                    school: document.getElementById('school').value.trim(),
-                    major: document.getElementById('major').value.trim(),
-                    educationLevel: document.getElementById('educationLevel').value,
-                    graduation: document.getElementById('graduation').value.trim(),
-                    gpa: document.getElementById('gpa').value.trim(),
-                    courses: document.getElementById('courses').value.trim(),
-                    skills: document.getElementById('skills').value.trim(),
-                    certificates: document.getElementById('certificates').value.trim(),
-                    selfEvaluation: document.getElementById('selfEvaluation').value.trim(),
-                    jd: document.getElementById('jd').value.trim(),
-                    templateId: selectedTemplateId,
-                    experiences: experiences.map(exp => ({
-                        id: exp.id,
-                        type: exp.type,
-                        role: exp.role,
-                        company: exp.company,
-                        date: exp.date,
-                        // 修复：<< 改为 <
-                        content: exp.content.replace(/<<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-                    }))
-                };
-
-                const optimizeRes = await fetch(`${API_BASE_URL}/api/optimize`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const optimizeData = await optimizeRes.json();
-                generatedResults = optimizeData.results || [];
-                displayResults(generatedResults);
-
-                await loadSuggestions();
-                await generateFullResume();
-
-            } catch (error) {
-                console.error('生成失败:', error);
-                outputArea.innerHTML = '<div class="text-red-400 text-center py-10">生成失败，请检查网络连接后重试</div>';
-            } finally {
-                checkFormValidity();
-            }
-        });
-
-        function displayResults(results) {
-            outputArea.innerHTML = '';
-            if (!results.length) {
-                outputArea.innerHTML = '<div class="text-center text-gray-400 py-10">暂无优化结果</div>';
-                return;
-            }
-            results.forEach((result, index) => {
-                const card = document.createElement('div');
-                card.className = 'output-card';
-                card.innerHTML = `
-                    <div class="flex justify-between items-center mb-3">
-                        <span class="output-card-focus">${result.focus || '优化结果'}</span>
-                        <button class="copy-btn bg-[rgba(212,175,55,0.1)] border border-[#D4AF37] text-[#D4AF37] px-3 py-1 rounded text-sm" onclick="copyResult(${index})">
-                            <i class="fa-solid fa-copy"></i> 复制
-                        </button>
-                    </div>
-                    <div class="space-y-2 text-sm">
-                        <p><strong class="text-[#D4AF37]">情境(S)：</strong>${result.S || ''}</p>
-                        <p><strong class="text-[#D4AF37]">任务(T)：</strong>${result.T || ''}</p>
-                        <p><strong class="text-[#D4AF37]">行动(A)：</strong>${result.A || ''}</p>
-                        <p><strong class="text-[#D4AF37]">结果(R)：</strong>${result.R || ''}</p>
-                    </div>`;
-                outputArea.appendChild(card);
-            });
-        }
-
-        function copyResult(index) {
-            const r = generatedResults[index];
-            if (!r) return;
-            const text = `【${r.focus}】\n\n情境(S)：${r.S}\n任务(T)：${r.T}\n行动(A)：${r.A}\n结果(R)：${r.R}`;
-            navigator.clipboard.writeText(text).then(() => alert('已复制到剪贴板'));
-        }
-
-        async function loadSuggestions() {
-            suggestionsPanel.style.display = 'block';
-            suggestionsContent.innerHTML = '<div class="text-center text-gray-500 py-4"><span class="loading-spinner"></span> 正在分析并生成个性化建议...</div>';
-            allSuggestions = [];
-            for (const exp of experiences) {
-                // 修复：<< 改为 <
-                const text = exp.content.replace(/<<[^>]*>/g, '').trim();
-                if (!text) continue;
-                try {
-                    const res = await fetch(`${API_BASE_URL}/api/suggestions`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            experience: { id: exp.id, type: exp.type, role: exp.role, company: exp.company, date: exp.date, content: text },
-                            jd: document.getElementById('jd').value.trim(),
-                            targetJob: document.getElementById('targetJob').value.trim(),
-                            skills: document.getElementById('skills').value.trim()
-                        })
-                    });
-                    const data = await res.json();
-                    if (data.suggestions && data.suggestions.length > 0) {
-                        allSuggestions.push({
-                            expRole: exp.role, expCompany: exp.company, isExcellent: data.isExcellent,
-                            title: data.title, suggestions: data.suggestions
-                        });
-                    }
-                } catch (e) { console.error('建议生成失败:', e); }
-            }
-            renderSuggestions(allSuggestions);
-        }
-
-        function renderSuggestions(allSuggestions) {
-            if (!allSuggestions.length) {
-                suggestionsContent.innerHTML = '<div style="text-align:center;color:#999;padding:20px">请填写经历内容后重新生成</div>';
-                return;
-            }
-            let html = '';
-            allSuggestions.forEach((group, idx) => {
-                if (idx > 0) html += '<div style="border-top:2px solid #ddd;margin:20px 0"></div>';
-                html += `<div class="suggestions-title">${group.title}</div>`;
-                if (group.isExcellent) html += '<div style="color:#27ae60;font-weight:bold;margin-bottom:15px">🎉 你的经历描述非常优秀！</div>';
-                group.suggestions.forEach(s => {
-                    const typeClass = s.type === 'critical' ? 'critical' : s.type === 'adapt' ? 'adapt' : 'bonus';
-                    html += `
-                        <div class="suggestion-item">
-                            <div class="suggestion-type ${typeClass}">
-                                ${s.icon} ${s.label}${s.type === 'critical' ? '（必须改）' : s.type === 'adapt' ? '（针对性改）' : '（建议改）'}
-                            </div>
-                            <div class="suggestion-issue">【问题定位】${s.issue}</div>
-                            <div class="suggestion-direction">【具体修改方向】${s.direction}</div>
-                            <div class="suggestion-example">【参考示例】${s.example}</div>
-                        </div>`;
-                });
-            });
-            suggestionsContent.innerHTML = html;
-        }
-
-        async function generateFullResume() {
-            updateStep(3);
-            resumeSection.style.display = 'block';
-            const tmplName = RESUME_TEMPLATES[selectedTemplateId]?.name || '选定模板';
-            resumePreviewContainer.innerHTML = `<div class="flex flex-col items-center justify-center py-20 text-gray-400"><span class="loading-spinner" style="width:32px;height:32px;margin-bottom:12px"></span><p>AI正在按【${tmplName}】风格生成简历...</p></div>`;
-
-            try {
-                const payload = {
-                    targetJob: document.getElementById('targetJob').value.trim(),
-                    expectedCity: document.getElementById('expectedCity').value.trim(),
-                    jobType: document.getElementById('jobType').value,
-                    name: document.getElementById('name').value.trim(),
-                    phone: document.getElementById('phone').value.trim(),
-                    email: document.getElementById('email').value.trim(),
-                    photo: document.getElementById('photo').value.trim(),
-                    github: document.getElementById('github').value.trim(),
-                    blog: document.getElementById('blog').value.trim(),
-                    portfolio: document.getElementById('portfolio').value.trim(),
-                    personalWebsite: document.getElementById('personalWebsite').value.trim(),
-                    school: document.getElementById('school').value.trim(),
-                    major: document.getElementById('major').value.trim(),
-                    educationLevel: document.getElementById('educationLevel').value,
-                    graduation: document.getElementById('graduation').value.trim(),
-                    gpa: document.getElementById('gpa').value.trim(),
-                    courses: document.getElementById('courses').value.trim(),
-                    skills: document.getElementById('skills').value.trim(),
-                    certificates: document.getElementById('certificates').value.trim(),
-                    selfEvaluation: document.getElementById('selfEvaluation').value.trim(),
-                    jd: document.getElementById('jd').value.trim(),
-                    templateId: selectedTemplateId,
-                    experiences: experiences.map(exp => ({
-                        id: exp.id, type: exp.type, role: exp.role, company: exp.company, date: exp.date,
-                        // 修复：<< 改为 <
-                        content: exp.content.replace(/<<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
-                    })),
-                    starResults: generatedResults,
-                    suggestions: allSuggestions
-                };
-
-                const res = await fetch(`${API_BASE_URL}/api/generate-resume`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                if (data.success) {
-                    resumePreviewContainer.innerHTML = data.html;
-                    updateStep(4);
-                } else {
-                    throw new Error('生成失败');
-                }
-            } catch (e) {
-                console.error('简历生成失败:', e);
-                resumePreviewContainer.innerHTML = '<div class="text-center text-red-500 py-10">简历生成失败，请重试</div>';
-            }
-        }
-
-        function refreshResume() { generateFullResume(); }
-
-        function exportResume() {
-            const resumeHTML = resumePreviewContainer.innerHTML;
-            const name = document.getElementById('name').value.trim() || '简历';
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + name + '的简历</title>');
-            printWindow.document.write('<style>@page { size: A4; margin: 0; } body { margin: 0; padding: 15mm; font-family: "Inter","PingFang SC","Microsoft YaHei",sans-serif; background: white; color: #333; line-height: 1.6; } * { box-sizing: border-box; }</style>');
-            printWindow.document.write('</head><body>');
-            printWindow.document.write(resumeHTML);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.focus();
-            setTimeout(() => { printWindow.print(); }, 500);
-        }
-
-        function updateStep(stepNum) {
-            for (let i = 1; i <= 4; i++) {
-                const numEl = document.getElementById(`step-${i}-num`);
-                const iconEl = document.getElementById(`step-${i}-icon`);
-                const textEl = document.getElementById(`step-${i}-text`);
-                const labelEl = document.getElementById(`step-${i}-label`);
-                const progressEl = document.getElementById(`step-progress-${i}`);
-                if (i < stepNum) {
-                    numEl.classList.remove('pending', 'active'); numEl.classList.add('completed');
-                    iconEl.style.display = 'inline'; textEl.style.display = 'none';
-                    labelEl.classList.add('completed'); labelEl.classList.remove('active');
-                    if (progressEl) progressEl.style.width = '100%';
-                } else if (i === stepNum) {
-                    numEl.classList.remove('pending', 'completed'); numEl.classList.add('active');
-                    iconEl.style.display = 'none'; textEl.style.display = 'inline';
-                    labelEl.classList.add('active'); labelEl.classList.remove('completed');
-                } else {
-                    numEl.classList.remove('completed', 'active'); numEl.classList.add('pending');
-                    iconEl.style.display = 'none'; textEl.style.display = 'inline';
-                    labelEl.classList.remove('completed', 'active');
-                    if (progressEl) progressEl.style.width = '0';
-                }
-            }
-        }
-
-        function toggleSection(sectionEl) {
-            const content = sectionEl.querySelector('.section-content');
-            const toggle = sectionEl.querySelector('.section-toggle');
-            content.classList.toggle('collapsed');
-            toggle.classList.toggle('rotated');
-        }
-
-        function fillExampleData() {
-            document.getElementById('targetJob').value = '前端开发工程师';
-            document.getElementById('expectedCity').value = '北京';
-            document.getElementById('jobType').value = 'fulltime';
-            document.getElementById('name').value = '张明';
-            document.getElementById('phone').value = '13812345678';
-            document.getElementById('email').value = 'zhangming@email.com';
-            document.getElementById('school').value = '北京理工大学';
-            document.getElementById('major').value = '计算机科学与技术';
-            document.getElementById('educationLevel').value = 'undergraduate';
-            document.getElementById('graduation').value = '2024.06';
-            document.getElementById('gpa').value = '3.7/4.0';
-            document.getElementById('courses').value = '数据结构、操作系统、计算机网络、软件工程';
-            document.getElementById('github').value = 'https://github.com/zhangming';
-            document.getElementById('blog').value = 'https://zhangming.dev';
-            document.getElementById('portfolio').value = 'https://zhangming.portfolio.com';
-            document.getElementById('skills').value = 'React、Vue、TypeScript、JavaScript、CSS3、Webpack、Git';
-            document.getElementById('certificates').value = '英语六级、计算机二级、阿里云ACP认证';
-            document.getElementById('selfEvaluation').value = '具有扎实的计算机基础知识和Web开发经验，熟悉React/Vue等主流前端框架，具备良好的团队协作能力和沟通能力，对技术有持续学习的热情。';
-            document.getElementById('jd').value = '岗位职责：\n1. 负责公司核心产品的前端开发与维护\n2. 参与产品需求分析和技术方案设计\n3. 优化页面性能和用户体验\n\n任职要求：\n1. 本科及以上学历，计算机相关专业\n2. 熟悉HTML/CSS/JavaScript\n3. 至少掌握一种主流前端框架（React/Vue/Angular）\n4. 有良好的沟通能力和团队协作精神';
-            selectTemplate('template_02');
-
-            experiences = [];
-            experiencesContainer.innerHTML = '';
-            const exp1 = { id: experienceIdCounter++, type: 'internship', role: '前端开发实习生', company: '字节跳动', date: '2023.06-2023.09', content: '<p>参与公司内部管理系统的前端开发，使用React+TypeScript技术栈</p><p><strong>主要职责：</strong></p><ul><li>负责用户管理模块的开发，实现用户列表、新增、编辑、删除功能</li><li>优化页面加载性能，将首屏加载时间从3s优化到1.5s</li><li>参与代码审查，协助解决团队技术难题</li></ul><p><strong>业绩：</strong>独立完成3个核心模块开发，代码质量获得导师好评</p>' };
-            const exp2 = { id: experienceIdCounter++, type: 'campus', role: '项目负责人', company: '校园创新项目', date: '2022.09-2023.01', content: '<p>带领5人团队开发校园二手交易平台，担任前端负责人</p><p><strong>主要职责：</strong></p><ul><li>负责前端架构设计和技术选型，采用Vue3+Vite技术栈</li><li>实现商品展示、搜索、购物车等核心功能</li><li>组织团队进行代码review和技术分享</li></ul><p><strong>业绩：</strong>项目获得校级创新大赛三等奖，累计用户超过2000人</p>' };
-            experiences.push(exp1, exp2);
-            experiences.forEach(exp => {
-                const card = createExperienceCard(exp.id);
-                experiencesContainer.appendChild(card);
-                setTimeout(() => {
-                    document.getElementById(`exp-type-${exp.id}`).value = exp.type;
-                    document.getElementById(`exp-role-${exp.id}`).value = exp.role;
-                    document.getElementById(`exp-company-${exp.id}`).value = exp.company;
-                    document.getElementById(`exp-date-${exp.id}`).value = exp.date;
-                    document.getElementById(`exp-content-${exp.id}`).innerHTML = exp.content;
-                }, 0);
-            });
-            updateCardNumbers();
-            checkFormValidity();
-        }
-
-        const jdInput = document.getElementById('jd');
-        const jdCount = document.getElementById('jd-count');
-        const experiencesContainer = document.getElementById('experiences-container');
-        const addExperienceBtn = document.getElementById('add-experience-btn');
-        const outputArea = document.getElementById('output-area');
-        const suggestionsPanel = document.getElementById('suggestions-panel');
-        const suggestionsContent = document.getElementById('suggestions-content');
-        const resumeSection = document.getElementById('resume-section');
-        const resumePreviewContainer = document.getElementById('resume-preview-container');
-        const fillExampleBtn = document.getElementById('fill-example-btn');
-
-        jdInput.addEventListener('input', () => {
-            jdCount.textContent = jdInput.value.length + '/5000';
-            checkFormValidity();
-        });
-
-        // 修复：为所有表单字段绑定校验
-        ['targetJob', 'name', 'phone', 'email', 'school', 'major', 'graduation', 
-         'skills', 'certificates', 'selfEvaluation', 'github', 'blog', 'portfolio', 
-         'personalWebsite', 'expectedCity'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('input', checkFormValidity);
-                el.addEventListener('change', checkFormValidity);
-            }
-        });
-
-        document.querySelectorAll('.form-section').forEach(section => {
-            section.addEventListener('click', (e) => {
-                if (e.target.closest('.section-header')) toggleSection(section);
-            });
-        });
-
-        fillExampleBtn.addEventListener('click', fillExampleData);
-
-        document.addEventListener('DOMContentLoaded', () => {
-            addExperience();
-            addExperienceBtn.addEventListener('click', addExperience);
-            loadTemplates();
-            checkFormValidity();
-        });
-    </script>
-</body>
-</html>
+            <div id="page-upload" class="max-w-[1400px] mx-auto px-10" style="display:none;">
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div class="lg:w-[45%]">
+                        <div class="glass-card">
+                            <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-cloud-arrow-up text-[#D4AF37] text-sm"></i> 上传简历文件
+                            </h2>
+                            <div id="upload-drop-zone" class="upload-drop-zone">
+                                <div class="upload-drop-zone-content">
+                                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-[#D4AF37] mb-3"></i>
+                                    <p class="text-white font-medium mb-1">拖放简历文件到此处</p>
+                                    <p class="text-gray-400 text-sm mb-3">或点击选择文件</p>
+                                    <div class="flex flex-wrap justify-center gap-2 mb-3">
