@@ -743,41 +743,60 @@ async def call_doubao_suggestions(exp: ExperienceItem, jd: str, target_job: str 
 
 请生成个性化优化建议，只输出JSON格式。"""
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(
-            BASE_URL,
-            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
-            json={
-                "model": MODEL_ID,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "temperature": 0.7,
-                "max_tokens": 1500
-            }
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                BASE_URL,
+                headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": MODEL_ID,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "temperature": 0.7,
+                    "max_tokens": 1500
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            ai_content = clean_json_response(result["choices"][0]["message"]["content"])
+            data = json.loads(ai_content)
+
+            suggestions = []
+            for item in data.get("suggestions", []):
+                suggestions.append(SuggestionItem(
+                    type=item.get("type", "bonus"),
+                    icon=item.get("icon", "💡"),
+                    label=item.get("label", "加分项"),
+                    subject=item.get("subject", ""),
+                    issue=item.get("issue", ""),
+                    direction=item.get("direction", ""),
+                    example=item.get("example", "")
+                ))
+
+            is_excellent = data.get("isExcellent", False)
+            count = len(suggestions)
+            title = f"🎉 你的经历描述非常优秀！以下是2个可以锦上添花的小建议" if is_excellent else f"📝 你的简历个性化优化建议（共{count}条）"
+
+            return SuggestionsResponse(title=title, isExcellent=is_excellent, suggestions=suggestions)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"AI服务请求失败({e.response.status_code})")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="AI服务响应超时，请稍后重试")
+    except json.JSONDecodeError:
+        return SuggestionsResponse(
+            title="⚠️ AI返回数据解析异常",
+            isExcellent=False,
+            suggestions=[SuggestionItem(
+                type="bonus", icon="💡", label="通用建议",
+                subject="AI解析异常", issue="", direction="建议稍后重试获取更精准的建议", example=""
+            )]
         )
-        result = response.json()
-        ai_content = clean_json_response(result["choices"][0]["message"]["content"])
-        data = json.loads(ai_content)
-        
-        suggestions = []
-        for item in data.get("suggestions", []):
-            suggestions.append(SuggestionItem(
-                type=item.get("type", "bonus"),
-                icon=item.get("icon", "💡"),
-                label=item.get("label", "加分项"),
-                subject=item.get("subject", ""),
-                issue=item.get("issue", ""),
-                direction=item.get("direction", ""),
-                example=item.get("example", "")
-            ))
-        
-        is_excellent = data.get("isExcellent", False)
-        count = len(suggestions)
-        title = f"🎉 你的经历描述非常优秀！以下是2个可以锦上添花的小建议" if is_excellent else f"📝 你的简历个性化优化建议（共{count}条）"
-        
-        return SuggestionsResponse(title=title, isExcellent=is_excellent, suggestions=suggestions)
+    except Exception as e:
+        import logging
+        logging.error(f"Suggestions API error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"生成建议时出错: {str(e)}")
 
 async def call_doubao_generate_resume(req: GenerateResumeRequest) -> str:
     tmpl = TEMPLATE_STYLES.get(req.templateId, TEMPLATE_STYLES["template_15"])
@@ -879,27 +898,38 @@ GPA：{req.gpa or '未提供'}
 请直接输出简历的HTML body内容（不需要<html><head>，只需要<div class="resume">...</div>这样的内容块）。"""
 
     async with httpx.AsyncClient(timeout=120.0) as client:
-        response = await client.post(
-            BASE_URL,
-            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
-            json={
-                "model": MODEL_ID,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "temperature": 0.6,
-                "max_tokens": 3000
-            }
-        )
-        result = response.json()
-        ai_content = result["choices"][0]["message"]["content"]
-        html = clean_json_response(ai_content)
-        if "<body>" in html:
-            match = re.search(r'<body[^>]*>(.*?)</body>', html, re.DOTALL)
-            if match:
-                html = match.group(1)
-        return html.strip()
+        try:
+            response = await client.post(
+                BASE_URL,
+                headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": MODEL_ID,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "temperature": 0.6,
+                    "max_tokens": 3000
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            ai_content = result["choices"][0]["message"]["content"]
+            html = clean_json_response(ai_content)
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=502, detail=f"AI服务请求失败({e.response.status_code})")
+        except httpx.TimeoutException:
+            raise HTTPException(status_code=504, detail="AI生成简历超时，请稍后重试")
+        except (KeyError, IndexError) as e:
+            import logging
+            logging.error(f"AI返回数据格式异常: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=502, detail="AI服务返回数据格式异常")
+
+    if "<body>" in html:
+        match = re.search(r'<body[^>]*>(.*?)</body>', html, re.DOTALL)
+        if match:
+            html = match.group(1)
+    return html.strip()
 
 def clean_json_response(content: str) -> str:
     content = content.strip()
@@ -1257,9 +1287,9 @@ async def analyze_resume(resume_id: str = Form(...)):
         raise HTTPException(status_code=404, detail="简历不存在或已过期")
     if not API_KEY:
         raise HTTPException(status_code=500, detail="API Key 未配置")
-    
+
     resume_text = resume_store[resume_id]["extracted_text"]
-    
+
     system_prompt = """你是一位拥有10年经验的资深HR总监和简历分析专家。
 你的任务是对用户上传的简历进行全面、专业的分析。
 
@@ -1290,24 +1320,36 @@ async def analyze_resume(resume_id: str = Form(...)):
 
 请给出全面、专业的分析，只输出JSON格式。"""
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(
-            BASE_URL,
-            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
-            json={
-                "model": MODEL_ID,
-                "messages": [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                "temperature": 0.7,
-                "max_tokens": 2000
-            }
-        )
-        result = response.json()
-        ai_content = clean_json_response(result["choices"][0]["message"]["content"])
-        analysis = json.loads(ai_content)
-        return {"success": True, "analysis": analysis}
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                BASE_URL,
+                headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": MODEL_ID,
+                    "messages": [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    "temperature": 0.7,
+                    "max_tokens": 2000
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            ai_content = clean_json_response(result["choices"][0]["message"]["content"])
+            analysis = json.loads(ai_content)
+            return {"success": True, "analysis": analysis}
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"AI服务请求失败({e.response.status_code})")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="AI分析超时，请稍后重试")
+    except json.JSONDecodeError:
+        return {"success": False, "analysis": {"overall_score":0,"overall_comment":"AI返回数据解析异常","structure_analysis":"","content_analysis":"","highlights":[],"weaknesses":["AI解析异常"],"suggestions":["请稍后重试"],"keywords":[]}}
+    except Exception as e:
+        import logging
+        logging.error(f"Resume analysis error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"分析失败: {str(e)}")
 
 @app.post("/api/resume/chat")
 async def chat_with_resume(req: ResumeChatRequest):
@@ -1353,25 +1395,38 @@ async def chat_with_resume(req: ResumeChatRequest):
                 messages.append({"role": role, "content": content})
     
     messages.append({"role": "user", "content": safe_message})
-    
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.post(
-            BASE_URL,
-            headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
-            json={
-                "model": MODEL_ID,
-                "messages": messages,
-                "temperature": 0.7,
-                "max_tokens": 1500
-            }
-        )
-        result = response.json()
-        ai_reply = result["choices"][0]["message"]["content"]
-        
-        # 净化AI回复（虽然AI回复相对安全，但为了防御性编程）
-        safe_reply = SecurityUtils.sanitize_input(ai_reply, 5000)
-        
-        return {"success": True, "reply": safe_reply}
+
+    try:
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(
+                BASE_URL,
+                headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": MODEL_ID,
+                    "messages": messages,
+                    "temperature": 0.7,
+                    "max_tokens": 1500
+                }
+            )
+            response.raise_for_status()
+            result = response.json()
+            ai_reply = result["choices"][0]["message"]["content"]
+
+            safe_reply = SecurityUtils.sanitize_input(ai_reply, 5000)
+
+            return {"success": True, "reply": safe_reply}
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=502, detail=f"AI服务请求失败({e.response.status_code})")
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="AI响应超时，请稍后重试")
+    except (KeyError, IndexError) as e:
+        import logging
+        logging.error(f"Chat API format error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=502, detail="AI服务返回数据格式异常")
+    except Exception as e:
+        import logging
+        logging.error(f"Chat error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"处理消息时出错: {str(e)}")
 
 @app.get("/api/health")
 async def health_check():
