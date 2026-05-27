@@ -663,7 +663,7 @@
                     <div class="lg:w-[45%]">
                         <div class="flex justify-between items-center mb-4">
                             <button type="button" id="fill-example-btn" class="text-sm text-[#D4AF37] hover:text-[#F4C430] flex items-center gap-1">
-                                <i class="fa-solid fa-file-text"></i> \ud83d\udcdd \u586b\u5165\u793a\u4f8b\u6570\u636e
+                                <i class="fa-solid fa-file-text"></i> 📝 填入示例数据
                             </button>
                             <span class="text-sm text-gray-400" id="progress-text">已完成 0/8 个板块</span>
                         </div>
@@ -1030,24 +1030,24 @@
         var currentSuggestions = [];
 
         var TEMPLATES = [
-            {id:'template_01',name:'经典商务单栏',color:'#1a365d',tags:['财务','HR','行政','管培生']},
-            {id:'template_02',name:'互联网技术双栏',color:'#2563eb',tags:['Java','前端','后端','算法']},
-            {id:'template_03',name:'金融投行精英',color:'#000000',tags:['投行','研究员','PE','VC']},
-            {id:'template_04',name:'产品经理思维',color:'#f97316',tags:['产品经理','产品运营','B端']},
-            {id:'template_05',name:'运营增长数据',color:'#10b981',tags:['运营','增长','新媒体','营销']},
-            {id:'template_06',name:'国企央企正式',color:'#dc2626',tags:['公务员','事业单位','国企']},
-            {id:'template_07',name:'创意设计作品',color:'#8b5cf6',tags:['UI/UX','平面','视觉设计']},
-            {id:'template_08',name:'学术科研专业',color:'#000000',tags:['博士申请','高校教师','研究员']},
-            {id:'template_09',name:'市场营销品牌',color:'#ef4444',tags:['品牌经理','市场推广','公关']},
-            {id:'template_10',name:'医疗健康专业',color:'#059669',tags:['医生','护士','医药代表']},
-            {id:'template_11',name:'制造业工程',color:'#1e40af',tags:['工艺','机械工程师','生产管理']},
-            {id:'template_12',name:'教育培训行业',color:'#3b82f6',tags:['教师','教研','课程设计']},
-            {id:'template_13',name:'行政人事管理',color:'#4b5563',tags:['行政','HR','办公室主任']},
-            {id:'template_14',name:'咨询管理精英',color:'#1e3a8a',tags:['管理咨询','战略咨询','IT咨询']},
-            {id:'template_15',name:'应届生校招全能（默认）',color:'#3b82f6',tags:['应届生校招','通用']},
-            {id:'template_16',name:'社招3-5年进阶',color:'#0369a1',tags:['3-5年经验','主管','高级专员']},
-            {id:'template_17',name:'社招5年+管理',color:'#1e40af',tags:['5年+经验','经理','总监']},
-            {id:'template_18',name:'转行跨界桥梁',color:'#7c3aed',tags:['跨行业求职','职业转型']}
+            {id:'template_01',name:'经典商务单栏',desc:'简约商务风，ATS兼容100%，适合财务/HR/行政',color:'#1a365d',tags:['财务','HR','行政','管培生'],icon:'fa-building-columns'},
+            {id:'template_02',name:'互联网技术双栏',desc:'技术岗专属，技能前置，左右分栏布局',color:'#2563eb',tags:['Java','前端','后端','算法'],icon:'fa-code'},
+            {id:'template_03',name:'金融投行精英',desc:'极致专业，信息密度高，单栏紧凑',color:'#000000',tags:['投行','研究员','PE','VC'],icon:'fa-chart-line'},
+            {id:'template_04',name:'产品经理思维',desc:'突出产品思维和数据成果展示',color:'#f97316',tags:['产品经理','产品运营','B端'],icon:'fa-lightbulb'},
+            {id:'template_05',name:'运营增长数据',desc:'数据驱动，增长指标突出展示',color:'#10b981',tags:['运营','增长','新媒体','营销'],icon:'fa-rocket'},
+            {id:'template_06',name:'国企央企正式',desc:'政治面貌前置，稳重正式风格',color:'#dc2626',tags:['公务员','事业单位','国企'],icon:'fa-landmark'},
+            {id:'template_07',name:'创意设计作品',desc:'设计感第一，作品展示充分',color:'#8b5cf6',tags:['UI/UX','平面','视觉设计'],icon:'fa-palette'},
+            {id:'template_08',name:'学术科研专业',desc:'LaTeX风格，论文为核心内容',color:'#000000',tags:['博士申请','高校教师','研究员'],icon:'fa-flask'},
+            {id:'template_09',name:'市场营销品牌',desc:'Campaign案例突出，品牌思维',color:'#ef4444',tags:['品牌经理','市场推广','公关'],icon:'fa-bullhorn'},
+            {id:'template_10',name:'医疗健康专业',desc:'资质证书前置，临床经验突出',color:'#059669',tags:['医生','护士','医药代表'],icon:'fa-heart-pulse'},
+            {id:'template_11',name:'制造业工程',desc:'技术认证突出，产线经验结构化',color:'#1e40af',tags:['工艺','机械工程师','生产管理'],icon:'fa-gears'},
+            {id:'template_12',name:'教育培训行业',desc:'教学成果突出，亲和力强',color:'#3b82f6',tags:['教师','教研','课程设计'],icon:'fa-chalkboard-user'},
+            {id:'template_13',name:'行政人事管理',desc:'协调能力突出，流程优化清晰',color:'#4b5563',tags:['行政','HR','办公室主任'],icon:'fa-users'},
+            {id:'template_14',name:'咨询管理精英',desc:'麦肯锡风格，极度结构化高密度',color:'#1e3a8a',tags:['管理咨询','战略咨询','IT咨询'],icon:'fa-briefcase'},
+            {id:'template_15',name:'应届生校招全能（默认）',desc:'应届生专属，ATS友好，标准单栏',color:'#3b82f6',tags:['应届生校招','通用'],icon:'fa-graduation-cap'},
+            {id:'template_16',name:'社招3-5年进阶',desc:'职业成长清晰，能力层级明确',color:'#0369a1',tags:['3-5年经验','主管','高级专员'],icon:'fa-ladder-water'},
+            {id:'template_17',name:'社招5年+管理',desc:'管理能力清晰，战略高度大气',color:'#1e40af',tags:['5年+经验','经理','总监'],icon:'fa-crown'},
+            {id:'template_18',name:'转行跨界桥梁',desc:'可迁移能力前置，衔接新旧职业',color:'#7c3aed',tags:['跨行业求职','职业转型'],icon:'fa-right-left'}
         ];
 
         function $(sel) { return document.querySelector(sel); }
@@ -1107,24 +1107,93 @@
 
         function renderTemplates() {
             var container = $('#templates-container');
-            if (!container) return;
+            if (!container) {
+                console.error('[Template] #templates-container element not found!');
+                return;
+            }
+            if (!TEMPLATES || TEMPLATES.length === 0) {
+                console.error('[Template] TEMPLATES array is empty or undefined!');
+                container.innerHTML = '<div class="text-center py-6 text-red-400"><i class="fa-solid fa-triangle-exclamation mr-2"></i>模板数据加载失败</div>';
+                return;
+            }
+
             container.innerHTML = '';
-            TEMPLATES.forEach(function(tmpl) {
-                var div = document.createElement('div');
-                div.className = 'template-card' + (tmpl.id === selectedTemplateId ? ' selected' : '');
-                div.setAttribute('data-id', tmpl.id);
-                div.innerHTML = '<div class="flex items-center gap-2 mb-2"><span class="template-color-dot" style="background:'+tmpl.color+'"></span><span class="text-white font-medium text-sm">'+tmpl.name+'</span></div><div>'+tmpl.tags.map(function(tag){return '<span class="template-tag">'+tag+'</span>';}).join('')+'</div>';
-                div.onclick = function() { selectTemplate(tmpl.id); };
-                container.appendChild(div);
-            });
+            var renderedCount = 0;
+
+            try {
+                TEMPLATES.forEach(function(tmpl) {
+                    if (!tmpl || !tmpl.id || !tmpl.name) {
+                        console.warn('[Template] Invalid template entry:', tmpl);
+                        return;
+                    }
+                    var div = document.createElement('div');
+                    div.className = 'template-card' + (tmpl.id === selectedTemplateId ? ' selected' : '');
+                    div.setAttribute('data-id', tmpl.id);
+                    div.setAttribute('role', 'button');
+                    div.setAttribute('tabindex', '0');
+                    div.setAttribute('aria-label', '选择模板：' + tmpl.name);
+
+                    var iconHtml = tmpl.icon ? '<i class="fa-solid ' + tmpl.icon + ' text-[#D4AF37] text-lg"></i>' : '';
+                    var descHtml = tmpl.desc ? '<p class="text-xs text-gray-400 mt-1 leading-relaxed">' + escapeHtml(tmpl.desc) + '</p>' : '';
+                    var tagsHtml = tmpl.tags && tmpl.tags.length > 0
+                        ? '<div class="mt-2 flex flex-wrap gap-1">' + tmpl.tags.map(function(tag){return '<span class="template-tag">' + escapeHtml(tag) + '</span>';}).join('') + '</div>'
+                        : '';
+
+                    div.innerHTML = '<div class="flex items-center gap-2 mb-1">'
+                        + '<span class="template-color-dot" style="background:' + (tmpl.color||'#3b82f6') + '"></span>'
+                        + '<span class="text-white font-medium text-sm">' + escapeHtml(tmpl.name) + '</span>'
+                        + (tmpl.id === selectedTemplateId ? '<span class="ml-auto text-xs text-[#D4AF37]">✓ 当前使用</span>' : '')
+                        + '</div>'
+                        + descHtml
+                        + tagsHtml;
+
+                    div.onclick = function(e) { e.preventDefault(); selectTemplate(tmpl.id); };
+                    div.onkeypress = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectTemplate(tmpl.id); } };
+                    container.appendChild(div);
+                    renderedCount++;
+                });
+
+                if (renderedCount === 0) {
+                    container.innerHTML = '<div class="text-center py-6 text-gray-400"><i class="fa-solid fa-folder-open mr-2"></i>暂无可用模板</div>';
+                }
+
+                console.log('[Template] Successfully rendered ' + renderedCount + '/' + TEMPLATES.length + ' templates');
+
+            } catch(err) {
+                console.error('[Template] Render error:', err.message, err.stack);
+                container.innerHTML = '<div class="text-center py-6 text-red-400"><i class="fa-solid fa-triangle-exclamation mr-2"></i>模板渲染异常，请刷新页面重试</div>';
+            }
         }
 
         function selectTemplate(id) {
+            if (!id) { console.warn('[Template] selectTemplate called with empty id'); return; }
             selectedTemplateId = id;
             var tmpl = TEMPLATES.find(function(t){return t.id===id;});
-            $$('.template-card').forEach(function(el){ el.classList.toggle('selected', el.getAttribute('data-id')===id); });
+            if (!tmpl) {
+                console.error('[Template] Template not found for id:', id);
+                return;
+            }
+            $$('.template-card').forEach(function(el) {
+                var isSelected = el.getAttribute('data-id') === id;
+                el.classList.toggle('selected', isSelected);
+
+                // 同步更新 "✓ 当前使用" 标记
+                var badgeEl = el.querySelector('.template-current-badge');
+                if (isSelected && !badgeEl) {
+                    var nameSpan = el.querySelector('.text-white.font-medium.text-sm');
+                    if (nameSpan) {
+                        var badge = document.createElement('span');
+                        badge.className = 'ml-auto text-xs text-[#D4AF37] template-current-badge';
+                        badge.textContent = '✓ 当前使用';
+                        nameSpan.parentNode.insertBefore(badge, nameSpan.nextSibling);
+                    }
+                } else if (!isSelected && badgeEl) {
+                    badgeEl.remove();
+                }
+            });
             var nameEl = $('#selected-template-name');
             if (nameEl && tmpl) nameEl.textContent = tmpl.name;
+            console.log('[Template] Selected:', tmpl.name, '(' + id + ')');
         }
 
         function switchPage(page) {
@@ -1822,8 +1891,21 @@
 
         // 初始化
         function initAll() {
-            initCosmicBackground();
-            renderTemplates();
+            try {
+                initCosmicBackground();
+            } catch(e) {
+                console.warn('[Init] Cosmic background failed:', e.message);
+            }
+
+            try {
+                renderTemplates();
+            } catch(e) {
+                console.error('[Init] renderTemplates failed:', e.message);
+                var container = $('#templates-container');
+                if (container) {
+                    container.innerHTML = '<div class="text-center py-6 text-red-400"><i class="fa-solid fa-triangle-exclamation mr-2"></i>模板加载失败</div>';
+                }
+            }
 
             $$('.section-header').forEach(function(el) {
                 el.onclick = function() { toggleSection(el); };
@@ -1844,8 +1926,14 @@
                 inp.onchange = function() { updateProgress(); };
             });
 
-            initUploadModule();
+            try {
+                initUploadModule();
+            } catch(e) {
+                console.warn('[Init] Upload module failed:', e.message);
+            }
             updateProgress();
+
+            console.log('[Init] All modules initialized successfully');
         }
 
         if (document.readyState === 'loading') {
